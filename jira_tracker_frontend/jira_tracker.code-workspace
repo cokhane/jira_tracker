@@ -1,0 +1,13 @@
+{
+  "folders": [
+    {
+      "name": "jira_tracker_frontend",
+      "path": "."
+    },
+    {
+      "name": "jira_tracker_backend",
+      "path": "../../jira_tracker"
+    }
+  ],
+  "settings": {}
+}

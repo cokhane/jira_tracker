@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Nightly all-boards Jira sync — 20:00, Monday through Saturday.
+
+  StartCalendarInterval is evaluated in the machine's LOCAL timezone, which is
+  Asia/Manila here, so Hour 20 IS 8pm PH. launchd has no timezone key: if this Mac
+  ever moves to another timezone, the job follows the clock, not Manila.
+
+  Weekday: 1 = Monday ... 6 = Saturday (0 and 7 both mean Sunday, so omitting them
+  is what makes this Mon-Sat).
+
+  Install:
+
+    cp scripts/ai.anervea.sync-all-boards.plist ~/Library/LaunchAgents/
+    launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/ai.anervea.sync-all-boards.plist
+
+  Remove:
+
+    launchctl bootout gui/$(id -u)/ai.anervea.sync-all-boards
+    rm ~/Library/LaunchAgents/ai.anervea.sync-all-boards.plist
+
+  Run it once, now, without waiting for 20:00:
+
+    launchctl kickstart -p gui/$(id -u)/ai.anervea.sync-all-boards
+
+  If the Mac is asleep or off at 20:00, launchd runs the job once on the next wake.
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>ai.anervea.sync-all-boards</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/axeeeeee/anervea/jira_tracker/version_2/jira_tracker_backend/scripts/sync_all_boards.sh</string>
+    </array>
+
+    <key>StartCalendarInterval</key>
+    <array>
+        <dict>
+            <key>Weekday</key>
+            <integer>1</integer>
+            <key>Hour</key>
+            <integer>20</integer>
+            <key>Minute</key>
+            <integer>0</integer>
+        </dict>
+        <dict>
+            <key>Weekday</key>
+            <integer>2</integer>
+            <key>Hour</key>
+            <integer>20</integer>
+            <key>Minute</key>
+            <integer>0</integer>
+        </dict>
+        <dict>
+            <key>Weekday</key>
+            <integer>3</integer>
+            <key>Hour</key>
+            <integer>20</integer>
+            <key>Minute</key>
+            <integer>0</integer>
+        </dict>
+        <dict>
+            <key>Weekday</key>
+            <integer>4</integer>
+            <key>Hour</key>
+            <integer>20</integer>
+            <key>Minute</key>
+            <integer>0</integer>
+        </dict>
+        <dict>
+            <key>Weekday</key>
+            <integer>5</integer>
+            <key>Hour</key>
+            <integer>20</integer>
+            <key>Minute</key>
+            <integer>0</integer>
+        </dict>
+        <dict>
+            <key>Weekday</key>
+            <integer>6</integer>
+            <key>Hour</key>
+            <integer>20</integer>
+            <key>Minute</key>
+            <integer>0</integer>
+        </dict>
+    </array>
+
+    <key>RunAtLoad</key>
+    <false/>
+
+    <key>StandardOutPath</key>
+    <string>/Users/axeeeeee/anervea/jira_tracker/version_2/jira_tracker_backend/data/.work/sync_all.launchd.out.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/Users/axeeeeee/anervea/jira_tracker/version_2/jira_tracker_backend/data/.work/sync_all.launchd.err.log</string>
+</dict>
+</plist>

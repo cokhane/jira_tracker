@@ -1,0 +1,20 @@
+{
+  "folders": [
+    {
+      "name": "jira_tracker (backend)",
+      "path": "."
+    },
+    {
+      "name": "jira_tracker_frontend",
+      "path": "../jira_tracker_frontend"
+    }
+  ],
+  "settings": {
+    "python.defaultInterpreterPath": "${workspaceFolder:jira_tracker (backend)}/.venv/bin/python",
+    "files.exclude": {
+      "**/__pycache__": true,
+      "**/.venv": true,
+      "**/node_modules": true
+    }
+  }
+}

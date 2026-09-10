@@ -1,0 +1,59 @@
+# Board registry — one block per Jira board this tracker monitors.
+#
+# Shared secrets (Jira credentials, ANTHROPIC_API_KEY, CORS) stay in .env — never here.
+# Each board writes to its OWN SQLite file under DATA_DIR (default ./data), so boards can
+# never be confused with one another. Any field omitted below falls back to the default
+# in app/config.py (Settings); a field set to "" means "explicitly empty" (e.g. no roster).
+#
+# To add another board: copy a block, set key/name/db_file and the team fields, then
+# POST /api/config/reload (or restart). Available keys on this site include AL, ALFA, DA,
+# GS, IH, KYRS, MA, etc. — see GET of visible projects.
+
+projects:
+  - key: NEX
+    name: Nexus
+    db_file: nexus.db
+    current_sprint_only: true
+    # Sync allow-list: only these people are kept (14 = 11 devs + 3 QA).
+    # Names are Jira DISPLAY names, verified against /rest/api/3/users/search — a string that
+    # does not match exactly is silently dropped at sync and renders as a zero row.
+    # "rhidzkhan ahmad" is lower-case in Jira; keep it verbatim.
+    monitor_assignees: "Dan Denver De Leon,Dan Rudolf,Deinielle Cruz,Shane Michael Singwa,Allen Mathew Cordero,Pamela Denisse Sacdalan,Marlon Martin,Ankush Nag,Anshul Pandey,Kirbs Castillote,rhidzkhan ahmad,Jonas Ballesteros,Renzo.Manzano,Vermidio Pollisco Jr"
+    exclude_assignees: ""
+    # Sprint dev report roster (developers only; QA excluded here).
+    # DELIBERATELY EXCLUDES "rhidzkhan ahmad" even though it is monitored above. Attribution
+    # credits a ticket to the LATEST ROSTER MEMBER WHO MOVED IT (_attribute_roster in
+    # app/main.py), and that account performs most of the late QA/Merged/Deployment moves —
+    # on the roster it absorbed 328 of ~460 NEX tickets, cutting Allen 118→79 and Shane
+    # 101→20. Monitored (so its work is synced and counts in the sprint-wide total),
+    # not rostered (so it cannot take credit for other developers' tickets).
+    report_assignees: "Dan Denver De Leon,Dan Rudolf,Deinielle Cruz,Pamela Denisse Sacdalan,Allen Mathew Cordero,Shane Michael Singwa,Marlon Martin,Ankush Nag,Anshul Pandey,Kirbs Castillote"
+    report_done_statuses: "Done,Deployment,Merged,QA Testing"
+    report_timezone: "Asia/Manila"
+    sprint_anchor_date: "2026-06-22"
+    sprint_anchor_number: 1
+    sprint_length_days: 7
+    qa_passed_label: "QA_PASSED"
+    qa_failed_label: "QA_FAILED"
+    qa_report_assignees: ""
+    snapshot_exclude_done: false
+    # GitHub repos this board owns — the repo → board map for the merged-PR store
+    # (data/prs.db, written by scripts/ingest_merged_prs.py). A repo listed under two
+    # boards would make its PRs ambiguous, so each name appears exactly once overall.
+    github_repos: "nexus_api,nexus_panel_frontend"
+
+  - key: STH
+    name: SETHI Project
+    db_file: sethi.db
+    current_sprint_only: true
+    monitor_assignees: ""
+    exclude_assignees: ""
+    # Sprint dev report roster (verified against sethi.db assignee strings).
+    # monitor_assignees is "" above (keep everyone), so a new name needs adding only here.
+    # Excludes "rhidzkhan ahmad" for the same reason as the NEX roster above — on the roster
+    # it took 188 of 211 tickets here, cutting John 118→23 and dropping Muskan off entirely.
+    # monitor_assignees is "" (keep everyone), so its work is still synced either way.
+    report_assignees: "John Mandawe,Muskan Dawar,Roselle.Tabuena"
+    qa_report_assignees: ""
+    # See the NEX block above — repo → board map for the merged-PR store.
+    github_repos: "sethi_enterprise_frontend,sethi_enterprise_backend"

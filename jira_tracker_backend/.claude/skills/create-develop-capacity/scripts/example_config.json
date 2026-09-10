@@ -1,0 +1,21 @@
+{
+  "output": "~/Desktop/developer_capacity_weekly.xlsx",
+  "title": "Rolling Sprint Capacity — Developers (tickets / sprint)",
+  "sprints": [
+    {"name": "SPRINT 1", "dates": "Jun 29 – Jul 3",  "current": false},
+    {"name": "SPRINT 2", "dates": "Jul 6 – Jul 10",  "current": false},
+    {"name": "SPRINT 3", "dates": "Jul 13 – Jul 17", "current": true},
+    {"name": "SPRINT 4", "dates": "projected",       "current": false}
+  ],
+  "developers": [
+    {"name": "Sidney",  "capacity": 5,  "actual": 4},
+    {"name": "Denille", "capacity": 15, "actual": 16},
+    {"name": "Dan",     "capacity": 15, "actual": 11},
+    {"name": "Rudolf",  "capacity": 15, "actual": 15},
+    {"name": "Allen",   "capacity": 15, "actual": 24},
+    {"name": "Shane",   "capacity": 10, "actual": 12},
+    {"name": "JC",      "capacity": 15, "actual": 20},
+    {"name": "PAM",     "capacity": 5,  "actual": 12},
+    {"name": "Muscan",  "capacity": 10, "actual": null}
+  ]
+}

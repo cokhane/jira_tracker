@@ -1,0 +1,21 @@
+{
+  "_comment": "GitHub login -> the name the Timesheet sheet reports. An empty value (or a login missing from this map entirely) falls through to the raw GitHub login, and the generator prints those logins so you know what to fill in. Edit this file, not the code. The seven tracked developers are the roster in git-list-merge-pr; the rest are here only so a widened run still renders real names.",
+  "names": {
+    "Alfa-Jc": "John Carlo Mandawe",
+    "Alfa-Dan": "Dan Denver De Leon",
+    "Alfa-Axe": "Rhidzkhan Ahmad",
+    "Alfa-Deinielle": "Deinielle Cruz",
+    "Alfa-Rudolf": "Dan Perez",
+    "alfa-muskan": "Muskan Dawar",
+    "Alfa-Roselle": "Roselle Tabuena",
+
+    "Alfa-Shane": "",
+    "anervea-mark": "",
+    "Alfa-Pam": "",
+    "Alfa-Allen": "",
+    "Alfa-Marlon": "",
+    "Alfa-Kirbs": "",
+    "Alfa-Ankush": "",
+    "Alfa-Anshul": ""
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "_comment": "GitHub login -> the developer name on that BOARD's capacity grid. This is a SEPARATE map from developers.json: that one holds display names for the Timesheet sheet, this one holds the exact strings the capacity grid keys on, and the two genuinely disagree (developers.json says 'John Carlo Mandawe', the STH grid says 'John Mandawe'). A write is keyed by grid name, so a near-miss here is a 404, not a typo in a cell. Verify against `GET /api/<key>/capacity` — the grid is the only source of truth for these strings. A login absent from a board's map contributes nothing to that board and is reported as unmapped, never guessed.",
+  "_units": "Each write is a COUNT OF DISTINCT JIRA TICKETS the developer shipped in the window, which is the unit the grid's Capacity column is planned in (dev_target_default = 10 tickets/sprint). It is NOT the Timesheet's hours — those are commit-derived estimates and belong to a different sheet.",
+  "boards": {
+    "NEXUS": {
+      "key": "NEX",
+      "logins": {
+        "Alfa-Dan": "Dan Denver De Leon",
+        "Alfa-Deinielle": "Deinielle Cruz",
+        "Alfa-Rudolf": "Dan Rudolf"
+      }
+    },
+    "SETHI": {
+      "key": "STH",
+      "logins": {
+        "Alfa-Jc": "John Mandawe",
+        "alfa-muskan": "Muskan Dawar",
+        "Alfa-Roselle": "Roselle.Tabuena"
+      }
+    }
+  }
+}

@@ -1,0 +1,677 @@
+<title>Developer KPI Scorecard</title>
+<style>
+  :root {
+    --bg: #f6f8fb;
+    --surface: #ffffff;
+    --surface-2: #eef2f8;
+    --border: #dde5ee;
+    --border-strong: #c6d2e0;
+    --ink: #172231;
+    --ink-2: #5a6b80;
+    --ink-3: #8593a6;
+    --accent: #3b5bdb;
+    --accent-soft: #e7ecfc;
+    --good: #17915b;
+    --good-soft: #dcf0e6;
+    --warn: #b9781a;
+    --warn-soft: #f6ecd8;
+    --crit: #cf3f4b;
+    --crit-soft: #fbe2e4;
+    --star: #d99a2b;
+    --track: #e9eef5;
+    --shadow: 0 1px 2px rgba(23,34,49,.04), 0 4px 16px rgba(23,34,49,.05);
+    --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0e141c;
+      --surface: #151d28;
+      --surface-2: #1b2634;
+      --border: #26313f;
+      --border-strong: #33404f;
+      --ink: #e9eff7;
+      --ink-2: #9aabc0;
+      --ink-3: #6c7c91;
+      --accent: #7b93f2;
+      --accent-soft: #21294a;
+      --good: #3ecb8c;
+      --good-soft: #15311f;
+      --warn: #e0ac52;
+      --warn-soft: #33290f;
+      --crit: #f2717d;
+      --crit-soft: #3a1c20;
+      --star: #f0bd5a;
+      --track: #232f3d;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.28);
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #f6f8fb; --surface: #ffffff; --surface-2: #eef2f8; --border: #dde5ee; --border-strong: #c6d2e0;
+    --ink: #172231; --ink-2: #5a6b80; --ink-3: #8593a6; --accent: #3b5bdb; --accent-soft: #e7ecfc;
+    --good: #17915b; --good-soft: #dcf0e6; --warn: #b9781a; --warn-soft: #f6ecd8; --crit: #cf3f4b;
+    --crit-soft: #fbe2e4; --star: #d99a2b; --track: #e9eef5;
+    --shadow: 0 1px 2px rgba(23,34,49,.04), 0 4px 16px rgba(23,34,49,.05);
+  }
+  :root[data-theme="dark"] {
+    --bg: #0e141c; --surface: #151d28; --surface-2: #1b2634; --border: #26313f; --border-strong: #33404f;
+    --ink: #e9eff7; --ink-2: #9aabc0; --ink-3: #6c7c91; --accent: #7b93f2; --accent-soft: #21294a;
+    --good: #3ecb8c; --good-soft: #15311f; --warn: #e0ac52; --warn-soft: #33290f; --crit: #f2717d;
+    --crit-soft: #3a1c20; --star: #f0bd5a; --track: #232f3d;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.28);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.45;
+  }
+  .wrap { max-width: 1160px; margin: 0 auto; padding: 28px 22px 64px; }
+
+  /* ---- app shell + side panel ---- */
+  .app { display: flex; min-height: 100vh; align-items: stretch; }
+  .sidebar {
+    width: 238px; flex: 0 0 238px; background: var(--surface); border-right: 1px solid var(--border);
+    padding: 18px 14px; position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; gap: 3px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; padding: 6px 8px 14px; }
+  .brand .mark { width: 32px; height: 32px; border-radius: 9px; background: linear-gradient(140deg, var(--accent), #7b93f2); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 16px; flex: 0 0 auto; }
+  .brand .txt b { display: block; font-size: 14px; letter-spacing: -.01em; }
+  .brand .txt span { font-size: 11px; color: var(--ink-3); }
+  .nav-label { font-size: 10px; text-transform: uppercase; letter-spacing: .1em; color: var(--ink-3); font-weight: 650; padding: 13px 10px 5px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 9px; cursor: pointer;
+    color: var(--ink-2); font-size: 13.5px; font-weight: 530; border: 0; background: transparent; width: 100%;
+    text-align: left; font-family: inherit; transition: background .12s, color .12s;
+  }
+  .nav-item svg { width: 17px; height: 17px; flex: 0 0 auto; opacity: .85; stroke-linecap: round; stroke-linejoin: round; }
+  .nav-item:hover { background: var(--surface-2); color: var(--ink); }
+  .nav-item:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .nav-item.active { background: var(--accent-soft); color: var(--accent); font-weight: 620; }
+  .nav-item.active svg { opacity: 1; }
+  .nav-item .tagn { margin-left: auto; font-size: 9px; font-weight: 700; letter-spacing: .05em; color: var(--ink-3); background: var(--surface-2); padding: 2px 6px; border-radius: 999px; }
+  .nav-item.active .tagn { color: var(--accent); background: color-mix(in srgb, var(--accent) 18%, transparent); }
+  .side-foot { margin-top: auto; padding: 13px 10px 2px; border-top: 1px solid var(--border); font-size: 11.5px; color: var(--ink-2); display: flex; align-items: center; gap: 8px; }
+  .side-foot .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--good); box-shadow: 0 0 0 3px var(--good-soft); flex: 0 0 auto; }
+  .main { flex: 1 1 auto; min-width: 0; }
+
+  .placeholder { max-width: 1160px; margin: 0 auto; padding: 64px 22px; }
+  .placeholder .box { border: 1px dashed var(--border-strong); border-radius: 16px; padding: 52px 28px; text-align: center; background: var(--surface); }
+  .placeholder .ic { width: 40px; height: 40px; color: var(--ink-3); margin: 0 auto 14px; display: block; stroke-linecap: round; stroke-linejoin: round; }
+  .placeholder h2 { margin: 0 0 8px; font-size: 19px; color: var(--ink); }
+  .placeholder p { margin: 0 auto; max-width: 430px; font-size: 13.5px; color: var(--ink-2); line-height: 1.6; }
+  [hidden] { display: none !important; }
+
+  @media (max-width: 900px) {
+    .app { flex-direction: column; }
+    .sidebar { width: auto; flex: none; height: auto; position: sticky; top: 0; z-index: 10; flex-direction: row; align-items: center; gap: 3px; padding: 9px 12px; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--border); }
+    .brand { padding: 0 10px 0 4px; }
+    .brand .txt { display: none; }
+    .nav-label, .side-foot { display: none; }
+    .nav-item { width: auto; white-space: nowrap; padding: 8px 11px; }
+    .nav-item .tagn { display: none; }
+  }
+
+  /* ---- header ---- */
+  .head { display: flex; flex-wrap: wrap; gap: 18px 24px; align-items: flex-end; justify-content: space-between; margin-bottom: 22px; }
+  .title-block h1 { font-size: 25px; letter-spacing: -.02em; margin: 0 0 4px; font-weight: 680; }
+  .title-block .eyebrow { font-size: 11px; text-transform: uppercase; letter-spacing: .13em; color: var(--accent); font-weight: 650; margin-bottom: 7px; }
+  .sprint-meta { color: var(--ink-2); font-size: 13.5px; }
+  .sprint-meta b { color: var(--ink); font-weight: 620; }
+
+  /* ---- sprint selector ---- */
+  .sprintbar { display: flex; gap: 7px; overflow-x: auto; padding-bottom: 5px; margin-bottom: 20px; }
+  .sprint-pill { flex: 0 0 auto; border: 1px solid var(--border); background: var(--surface); border-radius: 10px; padding: 7px 13px; cursor: pointer; text-align: left; font-family: inherit; color: var(--ink-2); transition: border-color .12s, background .12s, color .12s; }
+  .sprint-pill:hover { border-color: var(--border-strong); color: var(--ink); }
+  .sprint-pill:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .sprint-pill.active { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+  .sprint-pill .sp-name { display: block; font-size: 12.5px; font-weight: 620; letter-spacing: -.01em; }
+  .sprint-pill .sp-range { display: block; font-size: 10.5px; color: var(--ink-3); margin-top: 1px; white-space: nowrap; }
+  .sprint-pill.active .sp-range { color: var(--accent); opacity: .75; }
+  .sp-now { display: inline-block; margin-left: 7px; font-size: 8.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--good); background: var(--good-soft); padding: 1px 6px; border-radius: 999px; vertical-align: 1px; }
+  .draft-tag {
+    display: inline-block; font-size: 10.5px; font-weight: 650; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--warn); background: var(--warn-soft); border: 1px solid color-mix(in srgb, var(--warn) 30%, transparent);
+    padding: 2px 8px; border-radius: 999px; margin-left: 8px; vertical-align: 2px;
+  }
+
+  .switcher { display: inline-flex; background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 3px; gap: 2px; }
+  .switcher button {
+    appearance: none; border: 0; background: transparent; color: var(--ink-2); cursor: pointer;
+    font: inherit; font-size: 13px; font-weight: 580; padding: 7px 13px; border-radius: 7px; line-height: 1;
+    transition: background .13s, color .13s;
+  }
+  .switcher button:hover { color: var(--ink); }
+  .switcher button[aria-pressed="true"] { background: var(--surface); color: var(--accent); box-shadow: var(--shadow); }
+  .switcher button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* ---- tiles ---- */
+  .tiles { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 24px; }
+  .tile { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 15px; box-shadow: var(--shadow); }
+  .tile .lab { font-size: 10.5px; text-transform: uppercase; letter-spacing: .09em; color: var(--ink-3); font-weight: 600; }
+  .tile .val { font-size: 27px; font-weight: 680; letter-spacing: -.02em; margin-top: 6px; font-variant-numeric: tabular-nums; line-height: 1.05; }
+  .tile .sub { font-size: 11.5px; color: var(--ink-2); margin-top: 3px; }
+  .tile .val .u { font-size: 15px; font-weight: 600; color: var(--ink-2); margin-left: 1px; }
+  .tile.accent .val { color: var(--accent); }
+  .tile .stars-inline { color: var(--star); letter-spacing: 1px; font-size: 15px; }
+
+  /* ---- card / table ---- */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; margin-bottom: 22px; }
+  .card-head { padding: 15px 18px 13px; border-bottom: 1px solid var(--border); display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .card-head h2 { font-size: 15px; font-weight: 640; margin: 0; letter-spacing: -.01em; }
+  .card-head .hint { font-size: 12px; color: var(--ink-3); }
+
+  .table-scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  thead th {
+    text-align: right; font-weight: 600; font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--ink-3); padding: 11px 14px; border-bottom: 1px solid var(--border); white-space: nowrap;
+    position: sticky; top: 0; background: var(--surface); cursor: pointer; user-select: none;
+  }
+  thead th:first-child { text-align: left; }
+  thead th.dev { padding-left: 18px; }
+  thead th:hover { color: var(--ink); }
+  thead th .arrow { opacity: 0; margin-left: 3px; font-size: 9px; }
+  thead th[aria-sort="descending"] .arrow, thead th[aria-sort="ascending"] .arrow { opacity: 1; color: var(--accent); }
+  thead th[aria-sort="ascending"] .arrow::after { content: "▲"; }
+  thead th[aria-sort="descending"] .arrow::after { content: "▼"; }
+
+  tbody td { padding: 10px 14px; text-align: right; border-bottom: 1px solid var(--border); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  tbody tr:last-child td { border-bottom: 0; }
+  tbody tr:hover td { background: var(--surface-2); }
+  td.dev { text-align: left; padding-left: 18px; font-weight: 560; color: var(--ink); }
+  td.dev .avatar {
+    display: inline-flex; width: 24px; height: 24px; border-radius: 7px; margin-right: 9px; vertical-align: -7px;
+    align-items: center; justify-content: center; font-size: 10.5px; font-weight: 680; color: #fff; letter-spacing: .02em;
+  }
+  .muted { color: var(--ink-3); }
+
+  /* delivery cell: value + mini bar */
+  .deliv { display: inline-flex; align-items: center; gap: 9px; justify-content: flex-end; }
+  .deliv .pct { min-width: 42px; text-align: right; font-weight: 600; }
+  .deliv .track { width: 62px; height: 7px; border-radius: 999px; background: var(--track); overflow: hidden; position: relative; }
+  .deliv .fill { height: 100%; border-radius: 999px; }
+  .b-good .fill { background: var(--good); } .b-good .pct { color: var(--good); }
+  .b-warn .fill { background: var(--warn); } .b-warn .pct { color: var(--warn); }
+  .b-crit .fill { background: var(--crit); } .b-crit .pct { color: var(--crit); }
+
+  .chip { display: inline-block; min-width: 22px; padding: 1px 7px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+  .chip.zero { color: var(--ink-3); background: transparent; }
+  .chip.warn { color: var(--warn); background: var(--warn-soft); }
+  .chip.crit { color: var(--crit); background: var(--crit-soft); }
+
+  .rating-cell { display: inline-flex; align-items: center; gap: 8px; justify-content: flex-end; }
+  .stars { color: var(--star); letter-spacing: 1.5px; font-size: 13.5px; }
+  .stars .off { color: var(--border-strong); }
+  .rating-cell .score { font-size: 11.5px; color: var(--ink-3); min-width: 30px; text-align: right; }
+
+  tfoot td { padding: 11px 14px; text-align: right; font-variant-numeric: tabular-nums; font-weight: 680; border-top: 2px solid var(--border-strong); }
+  tfoot td.dev { text-align: left; padding-left: 18px; text-transform: uppercase; font-size: 11px; letter-spacing: .07em; color: var(--ink-2); }
+
+  /* ---- charts ---- */
+  .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .chart .card-head { border-bottom: 1px solid var(--border); }
+  .plot { padding: 14px 18px 16px; position: relative; }
+  .row-c { display: grid; grid-template-columns: 120px 1fr 52px; align-items: center; gap: 10px; height: 30px; }
+  .row-c .name { font-size: 12px; color: var(--ink-2); text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row-c .barwrap { position: relative; height: 12px; background: var(--track); border-radius: 4px; }
+  .row-c .bar { position: absolute; left: 0; top: 0; height: 100%; border-radius: 4px; min-width: 3px; }
+  .row-c .num { font-size: 12px; font-weight: 600; text-align: left; font-variant-numeric: tabular-nums; }
+  .refline { position: absolute; top: 6px; bottom: 24px; width: 0; border-left: 1px dashed var(--border-strong); }
+  .refline .cap { position: absolute; top: -16px; left: 50%; transform: translateX(-50%); font-size: 9.5px; color: var(--ink-3); white-space: nowrap; letter-spacing: .04em; }
+  .axis { display: grid; grid-template-columns: 120px 1fr 52px; gap: 10px; margin-top: 6px; }
+  .axis .ticks { grid-column: 2; display: flex; justify-content: space-between; font-size: 10px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+
+  /* legend / formula footer */
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; padding: 12px 18px; border-top: 1px solid var(--border); font-size: 12px; color: var(--ink-2); }
+  .legend .k { display: inline-flex; align-items: center; gap: 6px; }
+  .legend .sw { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+  .formula { margin-top: 14px; padding: 15px 18px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; font-size: 12.5px; color: var(--ink-2); }
+  .formula b { color: var(--ink); font-weight: 620; }
+  .formula code { font-family: var(--font-mono); font-size: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 5px; padding: 1px 5px; color: var(--ink); }
+  .formula .parts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 9px; }
+  .formula .part { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 6px 11px; }
+  .formula .part b { color: var(--accent); }
+
+  .foot-note { margin-top: 18px; font-size: 11.5px; color: var(--ink-3); text-align: center; }
+
+  /* tooltip */
+  #tip { position: fixed; z-index: 20; pointer-events: none; background: var(--ink); color: var(--bg); font-size: 11.5px; font-weight: 500; padding: 6px 9px; border-radius: 7px; box-shadow: var(--shadow); opacity: 0; transform: translateY(3px); transition: opacity .1s; white-space: nowrap; }
+  #tip.on { opacity: 1; transform: none; }
+  #tip .t-name { font-weight: 680; }
+
+  @media (max-width: 860px) {
+    .tiles { grid-template-columns: repeat(3, 1fr); }
+    .charts { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 520px) {
+    .tiles { grid-template-columns: repeat(2, 1fr); }
+    .row-c, .axis { grid-template-columns: 92px 1fr 46px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="mark">S</div>
+      <div class="txt"><b>Sprint Tracker</b><span>Anervea Engineering</span></div>
+    </div>
+
+    <div class="nav-label">Board</div>
+    <button class="nav-item" data-route="soon" data-title="Velocity Board">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      Velocity Board
+    </button>
+
+    <div class="nav-label">Reports</div>
+    <button class="nav-item active" data-route="kpi" data-title="KPI Tracker">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="5" y1="21" x2="5" y2="12"/><line x1="12" y1="21" x2="12" y2="4"/><line x1="19" y1="21" x2="19" y2="9"/></svg>
+      KPI Tracker <span class="tagn">NEW</span>
+    </button>
+    <button class="nav-item" data-route="soon" data-title="Sprint Report">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h8l4 4v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v4h4"/><line x1="8.5" y1="12" x2="15" y2="12"/><line x1="8.5" y1="16" x2="13" y2="16"/></svg>
+      Sprint Report
+    </button>
+    <button class="nav-item" data-route="soon" data-title="Movement">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 12 7 12 10 5 14 19 17 12 21 12"/></svg>
+      Movement
+    </button>
+    <button class="nav-item" data-route="soon" data-title="Time Log">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v5l3.2 2"/></svg>
+      Time Log
+    </button>
+
+    <div class="side-foot"><span class="dot"></span> Synced 28 Jul 2026</div>
+  </aside>
+
+  <div class="main">
+    <div class="wrap" id="view-kpi">
+  <header class="head">
+    <div class="title-block">
+      <div class="eyebrow">Engineering · Sprint Performance</div>
+      <h1>Developer KPI Scorecard <span class="draft-tag">Live · synced 28 Jul 2026</span></h1>
+      <div class="sprint-meta"><b id="sprintName">—</b> · <span id="sprintRange">—</span> · <span id="devCount">—</span> developers · as of <span id="asof">—</span></div>
+    </div>
+    <div class="switcher" id="switcher" role="group" aria-label="Board">
+      <button data-board="NEX" aria-pressed="true">Nexus</button>
+      <button data-board="AKV2" aria-pressed="false">AlfaKinetic-V2</button>
+      <button data-board="STH" aria-pressed="false">SETHI</button>
+    </div>
+  </header>
+
+  <div class="sprintbar" id="sprintbar" role="group" aria-label="Sprint"></div>
+
+  <section class="tiles" id="tiles" aria-label="Team totals"></section>
+
+  <section class="card">
+    <div class="card-head">
+      <h2>Per-developer scorecard</h2>
+      <span class="hint">Click a column to sort · sorted by Rating</span>
+    </div>
+    <div class="table-scroll">
+      <table id="scoreTable">
+        <thead>
+          <tr>
+            <th class="dev" data-k="name">Developer <span class="arrow"></span></th>
+            <th data-k="target">Target <span class="arrow"></span></th>
+            <th data-k="done">Done <span class="arrow"></span></th>
+            <th data-k="delivery">Delivery % <span class="arrow"></span></th>
+            <th data-k="reopened">Reopened <span class="arrow"></span></th>
+            <th data-k="reopenPct">Reopen % <span class="arrow"></span></th>
+            <th data-k="blocked">Blocked <span class="arrow"></span></th>
+            <th data-k="wip">WIP <span class="arrow"></span></th>
+            <th data-k="rating">Rating <span class="arrow"></span></th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+        <tfoot id="tfoot"></tfoot>
+      </table>
+    </div>
+    <div class="legend">
+      <span class="k"><span class="sw" style="background:var(--good)"></span> Delivery ≥ 100%</span>
+      <span class="k"><span class="sw" style="background:var(--warn)"></span> 60–99%</span>
+      <span class="k"><span class="sw" style="background:var(--crit)"></span> &lt; 60%</span>
+      <span class="k" style="margin-left:auto"><span class="stars">★</span> Rating = weighted delivery, quality &amp; flow</span>
+    </div>
+  </section>
+
+  <section class="charts">
+    <div class="card chart">
+      <div class="card-head"><h2>Delivery % vs target</h2><span class="hint">done ÷ target</span></div>
+      <div class="plot" id="deliveryPlot"></div>
+    </div>
+    <div class="card chart">
+      <div class="card-head"><h2>Rating score</h2><span class="hint">0–100 composite</span></div>
+      <div class="plot" id="ratingPlot"></div>
+    </div>
+  </section>
+
+  <div class="formula">
+    <b>How Rating works</b> — a 0–100 composite mapped to ★1–5, so a high score means work delivered <i>and</i> delivered cleanly, not just high volume.
+    <div class="parts">
+      <span class="part"><b>50%</b> Delivery — hit your sprint target <span class="muted">(capped, so 300% ≠ runaway)</span></span>
+      <span class="part"><b>35%</b> Quality — low reopen / QA send-back rate</span>
+      <span class="part"><b>15%</b> Flow — work isn't stalling in Blocked</span>
+    </div>
+  </div>
+
+  <p class="foot-note">Live figures synced from Jira on 28 Jul 2026 · Done = tickets delivered this sprint (furthest stage, incl. Merged) · Reopened = QA send-backs · WIP = In Progress at sprint close · Target from the capacity sheet. This preview reads data only; the in-app version comes in a later step.</p>
+    </div>
+
+    <div class="placeholder" id="view-soon" hidden>
+      <div class="box">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        <h2 id="soon-title">Velocity Board</h2>
+        <p>This view already lives in the Sprint Tracker app. This preview focuses on the new <b>KPI Tracker</b> — pick it from the side panel to return.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="tip" role="status" aria-live="polite"></div>
+
+<script>
+  // ---- LIVE data — synced from Jira 28 Jul 2026 -----------------------------
+  // One array of sprints per board (oldest → newest). Done = tickets delivered
+  // (furthest stage incl. Merged) · Reopened = QA send-backs · Blocked = moved-to-Blocked
+  // · WIP = In Progress at sprint close · Target = rolling capacity (Rolling_Sprint_Capacity.xlsx).
+  const SYNC = "2026-07-28";
+  const DATA = {
+    NEX: [
+      { name: "NEX Sprint 1", range: "May 18 – Jun 30, 2026", start: "2026-05-18", end: "2026-06-30", asOf: "2026-06-30", rows: [
+        { name: "Dan Denver De Leon", target: 15, done: 26, reopened: 0, blocked: 0, wip: 1 },
+        { name: "Dan Rudolf", target: 15, done: 8, reopened: 0, blocked: 0, wip: 3 },
+        { name: "Deinielle Cruz", target: 15, done: 27, reopened: 0, blocked: 0, wip: 10 },
+        { name: "Pamela Denisse Sacdalan", target: 5, done: 0, reopened: 0, blocked: 0, wip: 0 },
+        { name: "Sidney Buenaventura", target: 5, done: 0, reopened: 0, blocked: 0, wip: 0 },
+        { name: "Allen Mathew Cordero", target: 15, done: 12, reopened: 0, blocked: 0, wip: 1 },
+        { name: "Shane Michael Singwa", target: 10, done: 3, reopened: 0, blocked: 0, wip: 11 },
+      ]},
+      { name: "NEX Sprint 2", range: "Jun 30 – Jul 7, 2026", start: "2026-06-30", end: "2026-07-07", asOf: "2026-07-06", rows: [
+        { name: "Dan Denver De Leon", target: 15, done: 18, reopened: 0, blocked: 0, wip: 1 },
+        { name: "Dan Rudolf", target: 15, done: 21, reopened: 3, blocked: 1, wip: 1 },
+        { name: "Deinielle Cruz", target: 15, done: 7, reopened: 3, blocked: 0, wip: 3 },
+        { name: "Pamela Denisse Sacdalan", target: 5, done: 1, reopened: 0, blocked: 0, wip: 0 },
+        { name: "Sidney Buenaventura", target: 5, done: 1, reopened: 0, blocked: 0, wip: 0 },
+        { name: "Allen Mathew Cordero", target: 15, done: 3, reopened: 1, blocked: 0, wip: 0 },
+        { name: "Shane Michael Singwa", target: 10, done: 7, reopened: 0, blocked: 2, wip: 5 },
+      ]},
+      { name: "NEX Sprint 3", range: "Jul 7 – Jul 14, 2026", start: "2026-07-07", end: "2026-07-14", asOf: "2026-07-12", rows: [
+        { name: "Dan Denver De Leon", target: 13, done: 33, reopened: 0, blocked: 0, wip: 1 },
+        { name: "Dan Rudolf", target: 15, done: 20, reopened: 0, blocked: 0, wip: 3 },
+        { name: "Deinielle Cruz", target: 16, done: 8, reopened: 0, blocked: 0, wip: 2 },
+        { name: "Pamela Denisse Sacdalan", target: 9, done: 15, reopened: 0, blocked: 2, wip: 1 },
+        { name: "Sidney Buenaventura", target: 5, done: 4, reopened: 0, blocked: 0, wip: 0 },
+        { name: "Allen Mathew Cordero", target: 20, done: 3, reopened: 2, blocked: 0, wip: 5 },
+        { name: "Shane Michael Singwa", target: 11, done: 28, reopened: 2, blocked: 20, wip: 14 },
+      ]},
+      { name: "NEX Sprint 4", range: "Jul 13 – Jul 20, 2026", start: "2026-07-13", end: "2026-07-20", asOf: "2026-07-20", rows: [
+        { name: "Dan Denver De Leon", target: 12, done: 37, reopened: 0, blocked: 0, wip: 0 },
+        { name: "Dan Rudolf", target: 15, done: 21, reopened: 0, blocked: 0, wip: 3 },
+        { name: "Deinielle Cruz", target: 16, done: 9, reopened: 0, blocked: 1, wip: 1 },
+        { name: "Pamela Denisse Sacdalan", target: 11, done: 23, reopened: 1, blocked: 4, wip: 1 },
+        { name: "Sidney Buenaventura", target: 5, done: 0, reopened: 0, blocked: 0, wip: 0 },
+        { name: "Allen Mathew Cordero", target: 22, done: 11, reopened: 0, blocked: 0, wip: 1 },
+        { name: "Shane Michael Singwa", target: 12, done: 21, reopened: 8, blocked: 9, wip: 18 },
+      ]},
+      { name: "NEX Sprint 5", range: "Jul 20 – Jul 27, 2026", start: "2026-07-20", end: "2026-07-27", asOf: "2026-07-22", rows: [
+        { name: "Dan Denver De Leon", target: 13, done: 15, reopened: 0, blocked: 0, wip: 1 },
+        { name: "Dan Rudolf", target: 16, done: 8, reopened: 0, blocked: 4, wip: 1 },
+        { name: "Deinielle Cruz", target: 12, done: 15, reopened: 0, blocked: 0, wip: 47 },
+        { name: "Pamela Denisse Sacdalan", target: 19, done: 11, reopened: 0, blocked: 2, wip: 6 },
+        { name: "Sidney Buenaventura", target: 7, done: 0, reopened: 0, blocked: 0, wip: 0 },
+        { name: "Allen Mathew Cordero", target: 18, done: 0, reopened: 0, blocked: 0, wip: 9 },
+        { name: "Shane Michael Singwa", target: 18, done: 19, reopened: 13, blocked: 3, wip: 20 },
+      ]},
+      { name: "NEX Sprint 6", range: "Jul 27 – Aug 3, 2026", start: "2026-07-27", end: "2026-08-03", asOf: "2026-07-28", rows: [
+        { name: "Dan Denver De Leon", target: 13, done: 0, reopened: 0, blocked: 0, wip: 0 },
+        { name: "Dan Rudolf", target: 16, done: 0, reopened: 0, blocked: 0, wip: 0 },
+        { name: "Deinielle Cruz", target: 12, done: 4, reopened: 0, blocked: 0, wip: 2 },
+        { name: "Pamela Denisse Sacdalan", target: 19, done: 0, reopened: 0, blocked: 0, wip: 2 },
+        { name: "Sidney Buenaventura", target: 7, done: 0, reopened: 0, blocked: 0, wip: 0 },
+        { name: "Allen Mathew Cordero", target: 18, done: 0, reopened: 0, blocked: 0, wip: 3 },
+        { name: "Shane Michael Singwa", target: 18, done: 8, reopened: 0, blocked: 0, wip: 29 },
+      ]},
+    ],
+    AKV2: [
+      { name: "AKV2 Sprint 2", range: "Jul 6 – Jul 13, 2026", start: "2026-07-06", end: "2026-07-13", asOf: "2026-07-12", rows: [
+        { name: "Dan Rudolf", target: 15, done: 13, reopened: 0, blocked: 0, wip: 0 },
+        { name: "Deinielle Cruz", target: 16, done: 10, reopened: 0, blocked: 0, wip: 0 },
+        { name: "Sidney Buenaventura", target: 5, done: 0, reopened: 0, blocked: 0, wip: 6 },
+      ]},
+      { name: "AKV2 Sprint 3", range: "Jul 13 – Jul 20, 2026", start: "2026-07-13", end: "2026-07-20", asOf: "2026-07-20", rows: [
+        { name: "Dan Rudolf", target: 15, done: 16, reopened: 0, blocked: 0, wip: 0 },
+        { name: "Deinielle Cruz", target: 16, done: 0, reopened: 0, blocked: 0, wip: 0 },
+        { name: "Sidney Buenaventura", target: 5, done: 16, reopened: 0, blocked: 4, wip: 2 },
+      ]},
+      { name: "AKV2 Sprint 4", range: "Jul 20 – Jul 27, 2026", start: "2026-07-20", end: "2026-07-27", asOf: "2026-07-22", rows: [
+        { name: "Dan Rudolf", target: 16, done: 8, reopened: 10, blocked: 10, wip: 9 },
+        { name: "Deinielle Cruz", target: 12, done: 4, reopened: 0, blocked: 0, wip: 1 },
+        { name: "Sidney Buenaventura", target: 7, done: 10, reopened: 0, blocked: 4, wip: 1 },
+      ]},
+      { name: "AKV2 Sprint 5", range: "Jul 27 – Aug 3, 2026", start: "2026-07-27", end: "2026-08-03", asOf: "2026-07-28", rows: [
+        { name: "Dan Rudolf", target: 16, done: 8, reopened: 0, blocked: 8, wip: 0 },
+        { name: "Deinielle Cruz", target: 12, done: 0, reopened: 0, blocked: 0, wip: 0 },
+        { name: "Sidney Buenaventura", target: 7, done: 5, reopened: 2, blocked: 0, wip: 2 },
+      ]},
+    ],
+    STH: [
+      { name: "STH Sprint 1", range: "Jul 6 – Jul 13, 2026", start: "2026-07-06", end: "2026-07-13", asOf: "2026-07-13", rows: [
+        { name: "John Mandawe", target: 10, done: 34, reopened: 0, blocked: 0, wip: 15 },
+        { name: "Muskan Dawar", target: 8, done: 0, reopened: 0, blocked: 0, wip: 0 },
+      ]},
+      { name: "STH Sprint 2", range: "Jul 14 – Jul 20, 2026", start: "2026-07-14", end: "2026-07-20", asOf: "2026-07-20", rows: [
+        { name: "John Mandawe", target: 10, done: 25, reopened: 3, blocked: 0, wip: 0 },
+        { name: "Muskan Dawar", target: 7, done: 13, reopened: 0, blocked: 2, wip: 0 },
+      ]},
+      { name: "STH Sprint 3", range: "Jul 20 – Jul 27, 2026", start: "2026-07-20", end: "2026-07-27", asOf: "2026-07-28", rows: [
+        { name: "John Mandawe", target: 10, done: 10, reopened: 3, blocked: 1, wip: 0 },
+        { name: "Muskan Dawar", target: 10, done: 2, reopened: 6, blocked: 1, wip: 0 },
+      ]},
+    ],
+  };
+
+  // default sprint: the current/active one (newest) — the data as it stands today
+  function defaultSprint(key) { return DATA[key].length - 1; }
+  const isNow = s => SYNC >= s.start && SYNC <= s.end;
+  const fmtShort = iso => { const d = new Date(iso + "T00:00:00"); return d.toLocaleDateString("en-US", { month: "short", day: "numeric" }); };
+
+  // ---- KPI math (single source of truth for tiles, table, charts) -----------
+  const W = { delivery: 0.50, quality: 0.35, flow: 0.15 };
+  function enrich(r) {
+    const deliveryPct = r.target > 0 ? (r.done / r.target) * 100 : 0;
+    const reopenPct   = r.done > 0 ? (r.reopened / r.done) * 100 : 0;
+    const D = r.target > 0 ? Math.min(r.done / r.target, 1) : 0;
+    const Q = r.done > 0 ? 1 - Math.min(r.reopened / r.done, 1) : 0;
+    const F = 1 - Math.min(r.blocked / Math.max(r.done, 1), 1);
+    const rating = Math.round((100 * (W.delivery * D + W.quality * Q + W.flow * F)) * 10) / 10;
+    const stars = rating >= 85 ? 5 : rating >= 70 ? 4 : rating >= 50 ? 3 : rating >= 30 ? 2 : 1;
+    return { ...r, deliveryPct, reopenPct, rating, stars };
+  }
+
+  // deterministic avatar color from name (kept away from semantic hues)
+  const AV = ["#3b5bdb","#0e8a8a","#8a5cf2","#c26a1f","#2a7d46","#b23a8a","#4761c4","#1f7fb0"];
+  function avatarColor(name){ let h=0; for(const c of name) h=(h*31+c.charCodeAt(0))>>>0; return AV[h%AV.length]; }
+  function initials(name){ const p=name.trim().split(/\s+/); return ((p[0]||"")[0]||"")+((p[1]||"")[0]||""); }
+
+  const band = p => p >= 100 ? "good" : p >= 60 ? "warn" : "crit";
+  const starStr = n => '<span class="stars">' + '★'.repeat(n) + '<span class="off">' + '★'.repeat(5-n) + '</span></span>';
+
+  // ---- state ----
+  let current = "NEX";
+  let sprintIdx = defaultSprint("NEX");
+  let sort = { key: "rating", dir: -1 };
+
+  const $ = s => document.querySelector(s);
+  const tip = $("#tip");
+
+  function showTip(html, e){ tip.innerHTML = html; tip.classList.add("on"); moveTip(e); }
+  function moveTip(e){ const pad=14; let x=e.clientX+pad, y=e.clientY+pad; if(x+180>innerWidth)x=e.clientX-pad-170; tip.style.left=x+"px"; tip.style.top=y+"px"; }
+  function hideTip(){ tip.classList.remove("on"); }
+
+  function render() {
+    const sprints = DATA[current];
+    if (sprintIdx >= sprints.length) sprintIdx = sprints.length - 1;
+    const sp = sprints[sprintIdx];
+    const data = sp.rows.map(enrich);
+
+    $("#sprintName").textContent = sp.name;
+    $("#sprintRange").textContent = sp.range;
+    $("#devCount").textContent = data.length;
+    $("#asof").textContent = fmtShort(sp.asOf);
+
+    // sprint selector pills
+    $("#sprintbar").innerHTML = sprints.map((s, i) =>
+      `<button class="sprint-pill ${i === sprintIdx ? 'active' : ''}" data-i="${i}">
+        <span class="sp-name">${s.name.replace(current + ' ', '')}${isNow(s) ? '<span class="sp-now">● now</span>' : ''}</span>
+        <span class="sp-range">${s.range}</span>
+      </button>`).join("");
+
+    // ----- tiles (team-level) -----
+    const totDone = data.reduce((s,r)=>s+r.done,0);
+    const totTarget = data.reduce((s,r)=>s+r.target,0);
+    const avgDeliv = totTarget>0 ? Math.round(totDone/totTarget*100) : 0;
+    const totReopen = data.reduce((s,r)=>s+r.reopened,0);
+    const totBlocked = data.reduce((s,r)=>s+r.blocked,0);
+    const totWip = data.reduce((s,r)=>s+r.wip,0);
+    const avgRating = data.length ? data.reduce((s,r)=>s+r.rating,0)/data.length : 0;
+    const avgStars = data.length ? Math.round(data.reduce((s,r)=>s+r.stars,0)/data.length) : 0;
+
+    $("#tiles").innerHTML = [
+      { lab:"Total Done", val:`${totDone}`, sub:`of ${totTarget} committed` },
+      { lab:"Avg Delivery", val:`${avgDeliv}<span class="u">%</span>`, sub:`team throughput`, cls:"accent" },
+      { lab:"Reopened", val:`${totReopen}`, sub:`QA send-backs` },
+      { lab:"Blocked", val:`${totBlocked}`, sub:`stalled tickets` },
+      { lab:"WIP", val:`${totWip}`, sub:`in progress now` },
+      { lab:"Avg Rating", val:`${avgRating.toFixed(1)}`, sub:`<span class="stars-inline">${'★'.repeat(avgStars)}${'☆'.repeat(5-avgStars)}</span>` },
+    ].map(t=>`<div class="tile ${t.cls||''}"><div class="lab">${t.lab}</div><div class="val">${t.val}</div><div class="sub">${t.sub}</div></div>`).join("");
+
+    // ----- table -----
+    const sorted = [...data].sort((a,b)=>{
+      const k=sort.key; let av=a[k], bv=b[k];
+      if(k==="name") return sort.dir * String(av).localeCompare(String(bv));
+      if(k==="delivery"){ av=a.deliveryPct; bv=b.deliveryPct; }
+      if(k==="reopenPct"){ av=a.reopenPct; bv=b.reopenPct; }
+      return sort.dir * (av-bv);
+    });
+
+    $("#tbody").innerHTML = sorted.map(r=>{
+      const b = band(r.deliveryPct);
+      const fill = Math.min(r.deliveryPct, 100);
+      const reopenChip = r.reopenPct >= 25 ? "crit" : r.reopenPct > 0 ? "warn" : "zero";
+      const blockChip = r.blocked >= 2 ? "crit" : r.blocked > 0 ? "warn" : "zero";
+      return `<tr>
+        <td class="dev"><span class="avatar" style="background:${avatarColor(r.name)}">${initials(r.name)}</span>${r.name}</td>
+        <td>${r.target}</td>
+        <td>${r.done}</td>
+        <td><span class="deliv b-${b}"><span class="pct">${Math.round(r.deliveryPct)}%</span><span class="track"><span class="fill" style="width:${fill}%"></span></span></span></td>
+        <td><span class="chip ${r.reopened?reopenChip:'zero'}">${r.reopened||'–'}</span></td>
+        <td class="${r.reopenPct?'':'muted'}">${r.done? Math.round(r.reopenPct)+'%' : '–'}</td>
+        <td><span class="chip ${blockChip}">${r.blocked||'–'}</span></td>
+        <td>${r.wip}</td>
+        <td><span class="rating-cell">${starStr(r.stars)}<span class="score">${r.rating.toFixed(0)}</span></span></td>
+      </tr>`;
+    }).join("");
+
+    $("#tfoot").innerHTML = `<tr>
+      <td class="dev">Team total</td>
+      <td>${totTarget}</td><td>${totDone}</td>
+      <td><span class="deliv b-${band(avgDeliv)}"><span class="pct">${avgDeliv}%</span><span class="track"><span class="fill" style="width:${Math.min(avgDeliv,100)}%"></span></span></span></td>
+      <td>${totReopen}</td>
+      <td class="muted">${totDone?Math.round(totReopen/totDone*100)+'%':'–'}</td>
+      <td>${totBlocked}</td><td>${totWip}</td>
+      <td><span class="rating-cell">${starStr(avgStars)}<span class="score">${avgRating.toFixed(0)}</span></span></td>
+    </tr>`;
+
+    // header sort indicators
+    document.querySelectorAll("thead th").forEach(th=>{
+      th.setAttribute("aria-sort", th.dataset.k===sort.key ? (sort.dir<0?"descending":"ascending") : "none");
+    });
+
+    // ----- charts -----
+    renderDeliveryChart(data);
+    renderRatingChart(data);
+  }
+
+  function renderDeliveryChart(data){
+    const rows = [...data].sort((a,b)=>b.deliveryPct-a.deliveryPct);
+    const maxP = Math.max(100, ...rows.map(r=>r.deliveryPct));
+    const axisMax = Math.ceil(maxP/50)*50;
+    const bars = rows.map(r=>{
+      const b = band(r.deliveryPct);
+      const w = (r.deliveryPct/axisMax)*100;
+      return `<div class="row-c" data-name="${r.name}" data-tip="Delivery <b>${Math.round(r.deliveryPct)}%</b> · ${r.done}/${r.target} done">
+        <span class="name">${r.name.split(' ')[0]} ${(r.name.split(' ')[1]||'')[0]||''}.</span>
+        <span class="barwrap"><span class="bar" style="width:${w}%;background:var(--${b})"></span></span>
+        <span class="num" style="color:var(--${b})">${Math.round(r.deliveryPct)}%</span>
+      </div>`;
+    }).join("");
+    const refLeft = (100/axisMax)*100;
+    $("#deliveryPlot").innerHTML =
+      `<div class="refline" style="left:calc(120px + 10px + (100% - 120px - 52px - 20px) * ${refLeft/100});"><span class="cap">target 100%</span></div>`
+      + bars
+      + `<div class="axis"><div class="ticks"><span>0</span><span>${axisMax/2}</span><span>${axisMax}%</span></div></div>`;
+    wireBars("#deliveryPlot");
+  }
+
+  function renderRatingChart(data){
+    const rows = [...data].sort((a,b)=>b.rating-a.rating);
+    const bars = rows.map(r=>{
+      return `<div class="row-c" data-name="${r.name}" data-tip="Rating <b>${r.rating.toFixed(0)}</b> / 100 · ${'★'.repeat(r.stars)}">
+        <span class="name">${r.name.split(' ')[0]} ${(r.name.split(' ')[1]||'')[0]||''}.</span>
+        <span class="barwrap"><span class="bar" style="width:${r.rating}%;background:var(--accent)"></span></span>
+        <span class="num" style="color:var(--accent)">${r.rating.toFixed(0)}</span>
+      </div>`;
+    }).join("");
+    $("#ratingPlot").innerHTML = bars + `<div class="axis"><div class="ticks"><span>0</span><span>50</span><span>100</span></div></div>`;
+    wireBars("#ratingPlot");
+  }
+
+  function wireBars(sel){
+    document.querySelectorAll(`${sel} .row-c`).forEach(row=>{
+      row.addEventListener("mouseenter", e=> showTip(`<span class="t-name">${row.dataset.name}</span><br>${row.dataset.tip}`, e));
+      row.addEventListener("mousemove", moveTip);
+      row.addEventListener("mouseleave", hideTip);
+    });
+  }
+
+  // ---- events ----
+  $("#switcher").addEventListener("click", e=>{
+    const btn = e.target.closest("button"); if(!btn) return;
+    current = btn.dataset.board;
+    sprintIdx = defaultSprint(current);
+    document.querySelectorAll("#switcher button").forEach(b=>b.setAttribute("aria-pressed", b===btn));
+    render();
+  });
+  $("#sprintbar").addEventListener("click", e=>{
+    const b = e.target.closest(".sprint-pill"); if(!b) return;
+    sprintIdx = +b.dataset.i;
+    render();
+  });
+  document.querySelectorAll("thead th").forEach(th=>{
+    th.addEventListener("click", ()=>{
+      const k = th.dataset.k;
+      if(sort.key===k) sort.dir *= -1;
+      else sort = { key:k, dir: k==="name" ? 1 : -1 };
+      render();
+    });
+  });
+
+  // ---- side-panel routing ----
+  document.querySelectorAll(".nav-item").forEach(n=>{
+    n.addEventListener("click", ()=>{
+      document.querySelectorAll(".nav-item").forEach(x=>x.classList.toggle("active", x===n));
+      const kpi = n.dataset.route === "kpi";
+      document.getElementById("view-kpi").hidden = !kpi;
+      document.getElementById("view-soon").hidden = kpi;
+      if(!kpi) document.getElementById("soon-title").textContent = n.dataset.title;
+    });
+  });
+
+  render();
+</script>

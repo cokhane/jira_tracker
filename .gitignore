@@ -1,0 +1,32 @@
+# ---- Secrets ----
+.env
+.env.*
+!.env.example
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# ---- Node / Vite ----
+node_modules/
+dist/
+.vite/
+*.local
+
+# ---- Local databases & backups ----
+*.db
+*.sqlite
+*.sqlite3
+data/
+backups/
+
+# ---- OS / editor ----
+.DS_Store
+.idea/
+.vscode/

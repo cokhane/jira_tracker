@@ -1,0 +1,12 @@
+{
+  "_comment": "Recurring work that leaves no PR behind — code review, branch cleaning, board cleaning, ops, meetings. Keyed by GitHub login (the same keys as developers.json). Hours are DECLARED, not inferred from commits: give a range with hours_min/hours_max and the figure is DRAWN inside it (inclusive, on the 0.5h step), seeded from (developer, section, window) so re-running the same week rebuilds the same timesheet; give a scalar hours instead to pin one fixed figure. Declared hours land verbatim either way: the commit weighting skips them, the per-item 1.5h/8h clamps do not apply to them, and the light-week floor stretches only the commit-derived items around them. They DO count toward the 40h floor threshold. A standing block attaches to EVERY section the developer worked in — recurring work is not confined to one product, so a developer on both NEXUS and SETHI gets the block on both, drawn independently per section. An entry for a developer with no merged PRs in the window is skipped entirely — there is no block to attach it to, and they are never given a section they did not work in. Remove a developer's entry to drop their standing line.",
+  "items": {
+    "Alfa-Axe": [
+      {
+        "hours_min": 6.0,
+        "hours_max": 10.0,
+        "title": "Code review, Branch Cleaning, Board Cleaning"
+      }
+    ]
+  }
+}

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Weekly All-Boards sprint report — NOT INSTALLED.
+  This file is staged in the repo only. To activate:
+
+    cp scripts/ai.anervea.sprint-report.plist ~/Library/LaunchAgents/
+    launchctl load ~/Library/LaunchAgents/ai.anervea.sprint-report.plist
+
+  To deactivate:
+
+    launchctl unload ~/Library/LaunchAgents/ai.anervea.sprint-report.plist
+    rm ~/Library/LaunchAgents/ai.anervea.sprint-report.plist
+
+  Weekday 3 = Wednesday. Hour is a placeholder — edit it before installing.
+  If the Mac is asleep at the scheduled time, launchd runs the job once on wake.
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>ai.anervea.sprint-report</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/axeeeeee/anervea/jira_tracker/version_2/jira_tracker_backend/scripts/weekly_sprint_report.sh</string>
+    </array>
+
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Weekday</key>
+        <integer>3</integer>
+        <key>Hour</key>
+        <integer>7</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+
+    <key>RunAtLoad</key>
+    <false/>
+
+    <key>StandardOutPath</key>
+    <string>/Users/axeeeeee/Documents/sprint_report/.work/launchd.out.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/Users/axeeeeee/Documents/sprint_report/.work/launchd.err.log</string>
+</dict>
+</plist>
