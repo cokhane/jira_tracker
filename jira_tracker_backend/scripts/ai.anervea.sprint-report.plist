@@ -22,7 +22,7 @@
 
     <key>ProgramArguments</key>
     <array>
-        <string>/Users/axeeeeee/anervea/jira_tracker/version_2/jira_tracker_backend/scripts/weekly_sprint_report.sh</string>
+        <string>/Users/rhidzkhanahmad/Documents/axe/jira_tracker/jira_tracker_backend/scripts/weekly_sprint_report.sh</string>
     </array>
 
     <key>StartCalendarInterval</key>
@@ -39,9 +39,9 @@
     <false/>
 
     <key>StandardOutPath</key>
-    <string>/Users/axeeeeee/Documents/sprint_report/.work/launchd.out.log</string>
+    <string>/Users/rhidzkhanahmad/Documents/sprint_report/.work/launchd.out.log</string>
 
     <key>StandardErrorPath</key>
-    <string>/Users/axeeeeee/Documents/sprint_report/.work/launchd.err.log</string>
+    <string>/Users/rhidzkhanahmad/Documents/sprint_report/.work/launchd.err.log</string>
 </dict>
 </plist>

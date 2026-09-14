@@ -7,6 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
 
 from datetime import date, timedelta
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -129,7 +130,7 @@ def _run_for_all_boards(work):
 
 @app.post("/api/sync-all", tags=["sync"])
 def sync_all(
-    full: bool = Query(True, description="Full pull (True) or incremental (False)."),
+    full: Annotated[bool, Query(description="Full pull (True) or incremental (False).")] = True,
 ):
     """Sync every configured board into its own DB, in parallel. One board's failure is
     recorded but never aborts the others (this is the cron entrypoint)."""
@@ -149,8 +150,8 @@ def sync_all(
 
 @app.post("/api/snapshot-all", tags=["snapshots"])
 def snapshot_all(
-    target: date | None = Query(None, description="Day to snapshot; defaults to today."),
-    force: bool = Query(False, description="Required to overwrite a past day's snapshot."),
+    target: Annotated[date | None, Query(description="Day to snapshot; defaults to today.")] = None,
+    force: Annotated[bool, Query(description="Required to overwrite a past day's snapshot.")] = False,
 ):
     """Sync + snapshot every configured board into its own DB, in parallel. Per-board errors
     are recorded (a past-day snapshot without force → that board reports a 409-style error)
@@ -172,7 +173,7 @@ def snapshot_all(
 
 @app.get("/api/sync-health", tags=["sync"])
 def sync_health(
-    days: int = Query(14, ge=1, le=90, description="How many local days to report."),
+    days: Annotated[int, Query(ge=1, le=90, description="How many local days to report.")] = 14,
 ):
     """Health of the nightly sync across every board — the Sync Health dashboard's feed.
 
@@ -199,7 +200,7 @@ def sync_health(
 
 @router.post("/sync", response_model=schemas.SyncLogOut, tags=["sync"])
 def trigger_sync(
-    full: bool = Query(True, description="Full pull (True) or only issues changed since last sync (False)."),
+    full: Annotated[bool, Query(description="Full pull (True) or only issues changed since last sync (False).")] = True,
     db: Session = Depends(get_db),
     cfg: ProjectConfig = Depends(get_cfg),
 ):
@@ -289,8 +290,8 @@ _BOARD_ORDER = [
 
 @router.post("/snapshot", response_model=schemas.SnapshotResult, tags=["snapshots"])
 def take_snapshot(
-    target: date | None = Query(None, description="Day to snapshot; defaults to today."),
-    force: bool = Query(False, description="Required to overwrite a past day's snapshot."),
+    target: Annotated[date | None, Query(description="Day to snapshot; defaults to today.")] = None,
+    force: Annotated[bool, Query(description="Required to overwrite a past day's snapshot.")] = False,
     db: Session = Depends(get_db),
     cfg: ProjectConfig = Depends(get_cfg),
 ):
