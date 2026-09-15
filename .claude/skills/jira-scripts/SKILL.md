@@ -137,7 +137,7 @@ else. None of them owns a `scripts/` directory.
 
 ## Why this is not `app/jira_client.py`
 
-The app has its own Jira client at [app/jira_client.py](../../../app/jira_client.py) — deliberately
+The app has its own Jira client at [app/jira_client.py](../../../jira_tracker_backend/app/jira_client.py) — deliberately
 kept separate:
 
 | | `app/jira_client.py` | `jira-scripts/scripts/jira_api.py` |

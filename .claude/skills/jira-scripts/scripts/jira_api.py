@@ -22,6 +22,8 @@ Stdlib only, on purpose: these run under a bare `python3` with no virtualenv. Th
 own app/jira_client.py is a separate, httpx-based READ client for product code — do not
 merge the two (see this skill's SKILL.md, "Why this is not app/jira_client.py").
 """
+from __future__ import annotations  # `X | None` annotations on python3 < 3.10
+
 import argparse
 import base64
 import json
@@ -56,8 +58,9 @@ class AmbiguousEpicError(JiraApiError):
 
 
 def _default_env_file() -> Path:
-    # scripts/ -> jira-scripts/ -> skills/ -> .claude/ -> jira_tracker_backend/
-    return Path(__file__).resolve().parents[4] / ".env"
+    # scripts/ -> jira-scripts/ -> skills/ -> .claude/ -> <repo root>/
+    # .claude lives at the repo root, but the .env stays in jira_tracker_backend/.
+    return Path(__file__).resolve().parents[4] / "jira_tracker_backend" / ".env"
 
 
 def load_env(path: Path) -> dict:
