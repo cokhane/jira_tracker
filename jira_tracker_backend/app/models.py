@@ -1,7 +1,7 @@
 """ORM models — our own clean domain shape, decoupled from Jira's wire format."""
 from datetime import date, datetime, timezone
 
-from sqlalchemy import JSON, Date, DateTime, Integer, String, Text, UniqueConstraint
+from sqlalchemy import JSON, Boolean, Date, DateTime, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -136,6 +136,14 @@ class DailySnapshot(Base):
     sprint_end: Mapped[date | None] = mapped_column(Date)
 
     captured_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
+
+    # True when this row was DERIVED from status_transitions by scripts/backfill_history.py
+    # rather than captured live from Jira that day. A real capture sees the whole board;
+    # a reconstruction only sees issues whose changelog we hold, and carries no sprint
+    # tagging (Jira's changelog does not record sprint membership). Keeping the two
+    # distinguishable means a chart can exclude derived days rather than silently mixing
+    # a measured history with an inferred one.
+    reconstructed: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
 
 
 class SprintCapacity(Base):
