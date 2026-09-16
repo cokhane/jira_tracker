@@ -22,7 +22,7 @@
 
     <key>ProgramArguments</key>
     <array>
-        <string>/Users/rhidzkhanahmad/Documents/axe/jira_tracker/jira_tracker_backend/scripts/weekly_sprint_report.sh</string>
+        <string>/Users/rhidzkhanahmad/Projects/jira_tracker/jira_tracker_backend/scripts/weekly_sprint_report.sh</string>
     </array>
 
     <key>StartCalendarInterval</key>

@@ -33,7 +33,7 @@
 
     <key>ProgramArguments</key>
     <array>
-        <string>/Users/rhidzkhanahmad/Documents/axe/jira_tracker/jira_tracker_backend/scripts/sync_all_boards.sh</string>
+        <string>/Users/rhidzkhanahmad/Projects/jira_tracker/jira_tracker_backend/scripts/sync_all_boards.sh</string>
     </array>
 
     <key>StartCalendarInterval</key>
@@ -92,9 +92,9 @@
     <false/>
 
     <key>StandardOutPath</key>
-    <string>/Users/rhidzkhanahmad/Documents/axe/jira_tracker/jira_tracker_backend/data/.work/sync_all.launchd.out.log</string>
+    <string>/Users/rhidzkhanahmad/Projects/jira_tracker/jira_tracker_backend/data/.work/sync_all.launchd.out.log</string>
 
     <key>StandardErrorPath</key>
-    <string>/Users/rhidzkhanahmad/Documents/axe/jira_tracker/jira_tracker_backend/data/.work/sync_all.launchd.err.log</string>
+    <string>/Users/rhidzkhanahmad/Projects/jira_tracker/jira_tracker_backend/data/.work/sync_all.launchd.err.log</string>
 </dict>
 </plist>

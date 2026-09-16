@@ -22,7 +22,7 @@
 
 set -euo pipefail
 
-REPO="/Users/rhidzkhanahmad/Documents/axe/jira_tracker/jira_tracker_backend"
+REPO="/Users/rhidzkhanahmad/Projects/jira_tracker/jira_tracker_backend"
 PY="$REPO/.venv/bin/python"
 LOG="$REPO/data/.work/sync_all.log"
 
