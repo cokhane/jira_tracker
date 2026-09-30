@@ -53,8 +53,16 @@ python3 .claude/skills/jira-scripts/scripts/jira_api.py <subcommand> [args]
 | `find-epic` | `POST /rest/api/3/search/jql` | see **every** epic a name matches, before committing to one |
 | `get-issue` | `GET /rest/api/3/issue/{key}` | read issues back in confirmation shape (key, url, summary, status, assignee, epic) |
 
-Everything shared sits behind them: `.env` loading, basic auth, a 3-attempt retry on
+Everything shared sits behind them: credential resolution, basic auth, a 3-attempt retry on
 429/5xx, epic resolution, markdown→ADF, and the confirmation shape.
+
+**Credentials are environment-first, and a pair is taken WHOLE from one source.**
+`resolve_credentials()` reads the `ATLASSIAN_EMAIL`/`ATLASSIAN_API_TOKEN` pair, else the
+`JIRA_EMAIL`/`JIRA_API_TOKEN` pair, else `jira_tracker_backend/.env`. It never combines an email
+from one source with a token from another — that names an account nobody holds, and
+`rules/jira-rest-api-token.md` requires one named account per run. So a freshly-minted token in
+the environment takes effect for every caller of this file without editing `.env`, and every
+caller acts as the same account.
 
 ### `create-stories`
 

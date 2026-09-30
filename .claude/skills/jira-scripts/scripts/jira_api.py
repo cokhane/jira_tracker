@@ -14,9 +14,12 @@ Subcommands — the caller picks the API call it needs:
   find-epic       POST /rest/api/3/search/jql resolve an epic by name, ALL matches shown
   get-issue       GET  /rest/api/3/issue/KEY  fetch one issue back in confirmation shape
 
-Credentials come from jira_tracker_backend/.env (JIRA_BASE_URL / JIRA_EMAIL /
-JIRA_API_TOKEN) — the same token and the same Jira site (team-anervea.atlassian.net) that
-hosts both the NEX and STH boards.
+Credentials come from the environment when a complete pair is present
+(ATLASSIAN_EMAIL/ATLASSIAN_API_TOKEN, else JIRA_EMAIL/JIRA_API_TOKEN), otherwise from
+jira_tracker_backend/.env (JIRA_BASE_URL / JIRA_EMAIL / JIRA_API_TOKEN) — the same
+token and the same Jira site (team-anervea.atlassian.net) that hosts both the NEX and
+STH boards. A pair is always taken WHOLE from one source: an email from one and a token
+from another names an account nobody holds.
 
 Stdlib only, on purpose: these run under a bare `python3` with no virtualenv. The app's
 own app/jira_client.py is a separate, httpx-based READ client for product code — do not
@@ -27,6 +30,7 @@ from __future__ import annotations  # `X | None` annotations on python3 < 3.10
 import argparse
 import base64
 import json
+import os
 import re
 import sys
 import time
@@ -44,6 +48,9 @@ DEFAULT_ASSIGNEE_ACCOUNT_ID = "712020:525b78f1-26da-462d-b8cd-91b3598ad495"
 # which cannot distinguish "5 matches" from "5 of 40" — and silently taking issues[0] of a
 # truncated page is exactly how a ticket lands under the wrong epic.
 EPIC_SEARCH_MAX_RESULTS = 50
+
+# Jira's own maximum for /search/jql. Smaller only costs round trips.
+SEARCH_PAGE_SIZE = 100
 
 RETRYABLE_STATUS = (429, 500, 502, 503, 504)
 RETRY_ATTEMPTS = 3
@@ -78,6 +85,74 @@ def load_env(path: Path) -> dict:
         if not env.get(required):
             raise JiraApiError(f"{required} missing/empty in {path}")
     return env
+
+
+# Credential pairs, most specific first. A pair is always taken WHOLE from one source:
+# combining an email from the environment with a token from the .env file yields an identity
+# belonging to neither, and rules/jira-rest-api-token.md requires one named account per run.
+CREDENTIAL_PAIRS = (
+    ("ATLASSIAN_EMAIL", "ATLASSIAN_API_TOKEN"),
+    ("JIRA_EMAIL", "JIRA_API_TOKEN"),
+)
+
+
+def resolve_credentials(path: Path | None = None) -> dict:
+    """Credentials from the environment if a complete pair is there, else from the .env file.
+
+    Environment first so a freshly-minted token needs no file edit — the .env token lapsing
+    while its sync logs kept reporting success is why that matters here.
+    """
+    path = path or _default_env_file()
+    for email_key, token_key in CREDENTIAL_PAIRS:
+        email, token = os.environ.get(email_key), os.environ.get(token_key)
+        if email and token:
+            base = os.environ.get("JIRA_BASE_URL") or load_env(path)["JIRA_BASE_URL"]
+            return {"JIRA_BASE_URL": base, "JIRA_EMAIL": email, "JIRA_API_TOKEN": token}
+    return load_env(path)
+
+
+def escape_jql(value: str) -> str:
+    """Escape a value for interpolation into a JQL double-quoted string literal."""
+    return value.replace("\\", "\\\\").replace('"', '\\"')
+
+
+def whoami(jira: "Jira") -> str:
+    """The account this run acts as, called before any work.
+
+    A missing displayName is raised rather than defaulted: the whole point of the check is
+    that a run which cannot name its account does not proceed, and a fallback string would
+    let it proceed while printing an identity nobody holds.
+    """
+    name = jira.get("/rest/api/3/myself").get("displayName")
+    if not name:
+        raise JiraApiError("/myself returned no displayName — cannot establish which account "
+                           "this run acts as, so refusing to continue.")
+    return name
+
+
+def search_all(jira: "Jira", jql: str, fields: list[str]) -> list[dict]:
+    """Every issue matching `jql`, paged to exhaustion, with the exhaustion PROVEN.
+
+    Sampling a Jira board silently under-reports, and a short page looks exactly like a
+    complete result. So the loop may only stop on the server's own `isLast`: running out of
+    `nextPageToken` without it is a truncated read, and is raised rather than returned.
+    """
+    issues: list[dict] = []
+    token: str | None = None
+    while True:
+        body = {"jql": jql, "fields": fields, "maxResults": SEARCH_PAGE_SIZE}
+        if token:
+            body["nextPageToken"] = token
+        page = jira.post("/rest/api/3/search/jql", body)
+        issues.extend(page.get("issues", []))
+        if page.get("isLast"):
+            return issues
+        token = page.get("nextPageToken")
+        if not token:
+            raise JiraApiError(
+                f"Search stopped after {len(issues)} issues with neither isLast nor a next "
+                "page token — refusing to treat a truncated read as a complete one."
+            )
 
 
 class Jira:
@@ -138,7 +213,7 @@ class Jira:
 
 def find_epics(jira: Jira, project: str, name: str) -> list[dict]:
     """Return EVERY epic in `project` whose summary fuzzy-matches `name`, newest first."""
-    escaped = name.replace('"', '\\"')
+    escaped = escape_jql(name)
     data = jira.post("/rest/api/3/search/jql", {
         "jql": f'project = {project} AND issuetype = Epic AND summary ~ "{escaped}"',
         "fields": ["summary", "status"],
@@ -449,7 +524,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> int:
     """Parse args, authenticate, run the chosen subcommand, print its JSON result."""
     args = build_parser().parse_args()
-    env = load_env(args.env_file or _default_env_file())
+    env = resolve_credentials(args.env_file)
     jira = Jira(env)
     print(json.dumps(args.func(jira, args), indent=2))
     return 0
