@@ -1,8 +1,11 @@
 ---
 name: sethi-release-notes
 description: >-
-  Render a Jira status column as a standalone release-notes / UAT sheet — one HTML file for
-  viewing and sharing, and a second whose markup survives a paste into Microsoft Outlook.
+  Render a Jira status column as a release-notes / UAT sign-off package — an HTML sheet for
+  viewing and sharing, a second whose markup survives a paste into Microsoft Outlook, and an
+  .xlsx the business team fills in, with a Yes/No/On Hold dropdown and Jira hyperlinks. Each
+  carries a generated covering message naming the version, the ticket count and the sign-off
+  columns, so the note can never contradict the table under it.
   Use when the operator says "release notes", "deployment sheet", "UAT sign-off sheet",
   "what's ready to deploy", "make the release notes for STH", "release notes I can paste
   into Outlook", or asks to refresh an existing versioned sheet. Reads Jira through the REST
@@ -22,7 +25,8 @@ business team who sign the release off rather than to the developers who built i
 Jira access is delegated whole to [/jira-scripts](../jira-scripts/scripts/jira_api.py), which
 owns auth, retries, error shape, JQL escaping and the proven-exhaustive search. That file exists
 because four copies of a Jira client had already drifted apart — this skill consumes it rather
-than becoming the fifth. Stdlib only; runs under a bare `python3` with no virtualenv.
+than becoming the fifth. The HTML variants are stdlib only; the workbook needs `openpyxl`, which
+three sibling skills in this repo already depend on.
 
 ## Run it
 
@@ -39,8 +43,10 @@ beside another's:
 |---|---|
 | `<client>-release-notes-<version>.html` | Viewing and sharing — light + dark themes, web fonts |
 | `<client>-release-notes-<version>-outlook.html` | Pasting into Outlook |
+| `<client>-release-notes-<version>.xlsx` | The copy reviewers fill in and send back |
 
-Flags: `--status` (default `Deployment`), `--variant web|outlook|both`, `--out`.
+Flags: `--status` (default `Deployment`), `--variant web|outlook|xlsx|all` (default `all`),
+`--from` (who signs the covering note), `--out`.
 
 There is deliberately no raw-JQL flag. The masthead states which column was released, and a
 free-form query would let it name a status the run never actually asked for — a false heading
@@ -54,6 +60,34 @@ Run the tests after touching either renderer:
 ```bash
 python3 .claude/skills/sethi-release-notes/scripts/test_build_release_notes.py
 ```
+
+## The covering message
+
+Every sheet carries the note that goes out with it, above the table in both HTML variants and on
+its own tab in the workbook. It is **generated, never typed**, because every fact in it is already
+settled by the run — the client, the version, the ticket count, the status column, the two sign-off
+column headers and the exact words the dropdown accepts. A covering note is the one part of the
+package a reader trusts without checking, so a hand-typed count that has drifted from the table
+under it is the worst defect this skill could ship.
+
+It is signed by `--from`, defaulting to your git user — `Alfa-Axe` becomes `Axe` — and falling back
+to the Jira display name.
+
+One conditional: the sentence promising the attached spreadsheet appears **only** on a run that
+actually writes one. `--variant web` produces a note that does not mention an attachment, because a
+note promising a file that is not there sends the reviewer looking for it.
+
+## The two sign-off columns
+
+`Business Team Sign Off` and `Can this be deployed?` ship **empty** on every row — they are what the
+reviewer fills in, and the sheet must never arrive looking as though someone already answered for
+them. In the workbook the decision column is a **dropdown** (`Yes` / `No` / `On Hold`) with colour
+rules, not free text: a column that accepts "yes pls" and "Y" alongside "Yes" cannot be counted
+without a human re-reading all of it.
+
+The dropdown finds its column by `Kind`, never by a hardcoded index, so reordering the columns in
+`build_sheet` moves the validation with them. A validation left behind on a stale index is
+invisible until a reviewer meets it.
 
 ## The four rules this skill exists to hold
 
@@ -79,7 +113,7 @@ false-positive whenever a ticket moves between two calls.
 column being released, but a heading is not a per-row guarantee: these sheets get filtered,
 re-sorted and pasted into mail, where the heading parts company with the rows underneath it.
 
-## Why two renderers, and where the seam is
+## Why three renderers, and where the seam is
 
 Outlook on Windows renders mail with the **Word** engine, which ignores nearly everything the web
 sheet relies on: `<style>` blocks on paste, CSS custom properties, Google Fonts, `color-mix()`,
@@ -88,11 +122,14 @@ contract — every rule an inline `style` attribute, table layout, `bgcolor`/`ce
 attributes, fonts that ship with Windows, and light-only so it does not invert unpredictably in a
 dark reading pane.
 
-**Styling is duplicated on purpose; content is not.** The `Sheet` view model settles the title,
-the meta line, the band and footer wording, and the column set with its order — once, for both
-renderers. Each renderer reads that and owns only markup and style, mapping a column's `Kind` to
-its own presentation. So adding or reordering a column is one edit, while the two incompatible
-style contracts stay apart.
+The workbook is a third contract again — not markup at all, and the only one that is *written into*
+rather than read.
+
+**Styling is duplicated on purpose; content is not.** The `Sheet` view model settles the title, the
+meta line, the band and footer wording, the covering message, and the column set with its order —
+once, for all three renderers. Each reads that and owns only presentation, mapping a column's `Kind`
+to its own: a CSS class, an inline `style`, or a column width and fill. So adding or reordering a
+column is one edit, while the three incompatible contracts stay apart.
 
 Do not "simplify" this by giving the renderers a shared stylesheet or a shared template. That is
 the merge that silently breaks the paste, and it is what `/code-dry`'s own "a little duplication
