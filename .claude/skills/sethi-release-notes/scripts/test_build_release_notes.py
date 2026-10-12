@@ -12,12 +12,14 @@ import sys
 import tempfile
 import unittest
 from datetime import date
+import tempfile
 from pathlib import Path
 from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import build_release_notes as brn
+from openpyxl import load_workbook
 from jira_api import JiraApiError, escape_jql, resolve_credentials, search_all, whoami
 
 BASE = "https://team-anervea.atlassian.net"
@@ -41,10 +43,11 @@ ISSUES = [
 ]
 
 
-def make_sheet(issues=None):
+def make_sheet(issues=None, sender="Axe", has_workbook=True):
     issues = ISSUES if issues is None else issues
     return brn.build_sheet(brn.to_rows(issues, BASE), "SETHI", "v0.0.3",
-                           "Deployment", brn.sprint_names(issues), TODAY)
+                           "Deployment", brn.sprint_names(issues), TODAY,
+                           sender, has_workbook)
 
 
 class TestRows(unittest.TestCase):
@@ -226,6 +229,123 @@ class TestIdentityCheck(unittest.TestCase):
                 return {"displayName": "rhidzkhan ahmad"}
 
         self.assertEqual(whoami(Named()), "rhidzkhan ahmad")
+
+
+class TestCoveringMessage(unittest.TestCase):
+    """The note ships with every sheet, so every fact in it is drawn, never typed."""
+
+    def setUp(self):
+        self.message = "\n".join(make_sheet().message)
+
+    def test_it_names_the_client_the_version_and_the_count(self):
+        self.assertIn("SETHI v0.0.3", self.message)
+        self.assertIn("3 tickets", self.message)
+
+    def test_it_names_the_status_actually_queried(self):
+        self.assertIn("Deployment column", self.message)
+
+    def test_it_names_both_sign_off_columns_as_rendered(self):
+        self.assertIn(brn.SIGNOFF_HEADER, self.message)
+        self.assertIn(brn.DECISION_HEADER, self.message)
+
+    def test_it_offers_every_decision_the_dropdown_accepts(self):
+        for choice in brn.DECISION_CHOICES:
+            self.assertIn(choice, self.message)
+
+    def test_it_is_signed_by_the_sender(self):
+        self.assertEqual(make_sheet(sender="Marnie").message[-1], "Thanks,\nMarnie")
+
+    def test_the_decision_header_is_quoted_without_doubled_punctuation(self):
+        self.assertIn(f'under "{brn.DECISION_HEADER}"', "\n".join(make_sheet().message))
+        self.assertNotIn("?.", "\n".join(make_sheet().message))
+
+    def test_the_sign_off_newline_becomes_a_break_in_both_html_variants(self):
+        for name, doc in (("web", brn.render_web(make_sheet())),
+                          ("outlook", brn.render_outlook(make_sheet()))):
+            with self.subTest(name):
+                self.assertIn("Thanks,<br>Axe", doc)
+
+    def test_it_promises_a_spreadsheet_only_when_one_is_written(self):
+        self.assertIn("attached spreadsheet", "\n".join(make_sheet(has_workbook=True).message))
+        self.assertNotIn("attached spreadsheet",
+                         "\n".join(make_sheet(has_workbook=False).message))
+
+    def test_a_single_ticket_is_not_pluralised(self):
+        one = make_sheet(issues=ISSUES[:1])
+        self.assertIn("the 1 ticket currently", "\n".join(one.message))
+
+    def test_both_html_variants_carry_it(self):
+        for name, doc in (("web", brn.render_web(make_sheet())),
+                          ("outlook", brn.render_outlook(make_sheet()))):
+            with self.subTest(name):
+                self.assertIn("Please find below the release notes", doc)
+                self.assertIn("Axe", doc)
+
+
+class TestSender(unittest.TestCase):
+    def test_a_hyphenated_git_handle_yields_the_name_a_reader_knows(self):
+        self.assertEqual(brn.sender_from("Alfa-Axe", "rhidzkhan ahmad"), "Axe")
+
+    def test_it_falls_back_to_the_jira_display_name(self):
+        self.assertEqual(brn.sender_from(None, "rhidzkhan ahmad"), "Rhidzkhan")
+
+    def test_a_blank_git_name_is_not_mistaken_for_a_name(self):
+        self.assertEqual(brn.sender_from("   ", "rhidzkhan ahmad"), "Rhidzkhan")
+
+    def test_a_plain_name_survives_whole(self):
+        self.assertEqual(brn.sender_from("Marnie", "ignored"), "Marnie")
+
+
+class TestSignOffColumns(unittest.TestCase):
+    def test_both_sign_off_columns_are_present(self):
+        kinds = [column.kind for column in make_sheet().columns]
+        self.assertIn(brn.Kind.SIGNOFF, kinds)
+        self.assertIn(brn.Kind.DECISION, kinds)
+
+    def test_they_ship_empty_for_the_reviewer_to_fill(self):
+        sheet = make_sheet()
+        fillable = [c for c in sheet.columns
+                    if c.kind in (brn.Kind.SIGNOFF, brn.Kind.DECISION)]
+        for column in fillable:
+            for row in sheet.rows:
+                with self.subTest(column.header, key=row.key):
+                    self.assertEqual(column.of(row).text, "")
+
+    def test_the_dropdown_follows_the_column_rather_than_an_index(self):
+        sheet = make_sheet()
+        found = brn.decision_column(sheet)
+        self.assertEqual(sheet.columns[found - 1].kind, brn.Kind.DECISION)
+
+
+class TestWorkbook(unittest.TestCase):
+    def setUp(self):
+        self.path = Path(tempfile.mkdtemp()) / "sheet.xlsx"
+        brn.render_xlsx(make_sheet(), self.path)
+        self.book = load_workbook(self.path)
+
+    def test_it_writes_a_table_sheet_and_a_covering_note_sheet(self):
+        self.assertIn(brn.XL_NOTE_TAB, self.book.sheetnames)
+        self.assertEqual(len(self.book.sheetnames), 2)
+
+    def test_every_row_reaches_the_workbook(self):
+        table = self.book.worksheets[0]
+        self.assertEqual(table.max_row, len(make_sheet().rows) + 1)
+
+    def test_the_ticket_cell_links_to_jira(self):
+        table = self.book.worksheets[0]
+        self.assertTrue(table.cell(row=2, column=2).hyperlink.target.endswith("STH-97"))
+
+    def test_the_decision_column_carries_the_dropdown(self):
+        table = self.book.worksheets[0]
+        formulas = [v.formula1 for v in table.data_validations.dataValidation]
+        self.assertEqual(formulas, ['"Yes,No,On Hold"'])
+
+    def test_the_header_row_is_frozen_so_it_survives_scrolling(self):
+        self.assertEqual(self.book.worksheets[0].freeze_panes, "A2")
+
+    def test_a_tab_name_excel_would_reject_is_made_safe(self):
+        self.assertEqual(brn.tab_name("a/b:c*d?e[f]g"), "a-b-c-d-e-f-g")
+        self.assertLessEqual(len(brn.tab_name("x" * 60)), 31)
 
 
 class TestCssContract(unittest.TestCase):
