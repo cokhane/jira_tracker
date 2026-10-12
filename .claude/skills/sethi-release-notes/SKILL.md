@@ -31,7 +31,9 @@ python3 .claude/skills/sethi-release-notes/scripts/build_release_notes.py \
   --project STH --client SETHI --version v0.0.3
 ```
 
-Writes into `<client>_release_notes/` — `sethi_release_notes/` for the example above:
+Writes into `<client>_release_notes/<version>/` — `sethi_release_notes/v0-0-3/` for the
+example above. **Every version gets its own folder**, so one release's sheets never sit loose
+beside another's:
 
 | File | For |
 |---|---|
@@ -99,8 +101,13 @@ content half; `test_outlook_avoids_every_construct_word_ignores` guards the styl
 
 ## Versioning
 
-`--version` is a label, not derived state — the operator sets it. Each run writes a new pair of
-files rather than overwriting, so the output folder keeps the history of what was signed off.
+`--version` is a label, not derived state — the operator sets it. Each run writes into its own
+`<version>/` folder rather than overwriting, so the output folder keeps the history of what was
+signed off, one release per directory.
+
+Both the client and the version go through `slug()` on the way to a path — `v0.0.4` becomes
+`v0-0-4`, matching the filenames inside it — because `--version` reaches a directory name and a
+raw `../..` would walk straight out of the output folder.
 
 ## Publishing it as an artifact
 
