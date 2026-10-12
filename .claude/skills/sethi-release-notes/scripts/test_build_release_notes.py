@@ -118,6 +118,22 @@ class TestFilenameSafety(unittest.TestCase):
     def test_slug_strips_path_traversal(self):
         self.assertEqual(brn.slug("../../etc/passwd"), "etc-passwd")
 
+    def test_every_version_lands_in_its_own_folder(self):
+        self.assertEqual(brn.output_dir("SETHI", "v0.0.4", None),
+                         brn.Path("sethi_release_notes/v0-0-4"))
+
+    def test_two_versions_never_share_a_folder(self):
+        self.assertNotEqual(brn.output_dir("SETHI", "v0.0.3", None),
+                            brn.output_dir("SETHI", "v0.0.4", None))
+
+    def test_a_version_cannot_walk_out_of_the_output_folder(self):
+        self.assertEqual(brn.output_dir("SETHI", "../../etc", None),
+                         brn.Path("sethi_release_notes/etc"))
+
+    def test_an_explicit_out_wins_whole(self):
+        self.assertEqual(brn.output_dir("SETHI", "v0.0.4", "/tmp/sheets"),
+                         brn.Path("/tmp/sheets"))
+
     def test_slug_never_returns_empty(self):
         self.assertEqual(brn.slug("///"), "sheet")
 

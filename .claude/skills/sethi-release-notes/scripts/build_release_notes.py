@@ -363,6 +363,17 @@ def slug(value: str) -> str:
     return cleaned or SLUG_FALLBACK
 
 
+def output_dir(client: str, version: str, override: str | None) -> Path:
+    """Every version gets its own folder, so one release's sheets never mix with another's.
+
+    Both segments go through slug(): --version reaches a directory name, and a raw
+    "../.." would walk out of the output folder entirely.
+    """
+    if override:
+        return Path(override)
+    return Path(f"{slug(client)}_release_notes") / slug(version)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--project", required=True, help="Board key, e.g. STH")
@@ -372,7 +383,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--version", default=DEFAULT_VERSION,
                         help="Version label in the masthead")
     parser.add_argument("--variant", choices=["web", "outlook", "both"], default="both")
-    parser.add_argument("--out", help="Output folder (default: <client>_release_notes)")
+    parser.add_argument("--out", help="Output folder (default: <client>_release_notes/<version>)")
     return parser
 
 
@@ -400,7 +411,7 @@ def main() -> int:
     sheet = build_sheet(to_rows(issues, jira.base_url), client, args.version,
                         args.status, sprint_names(issues), today)
 
-    out_dir = Path(args.out) if args.out else Path(f"{slug(client)}_release_notes")
+    out_dir = output_dir(client, args.version, args.out)
     out_dir.mkdir(parents=True, exist_ok=True)
     stem = f"{slug(client)}-release-notes-{slug(args.version)}"
 
