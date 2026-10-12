@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Offline tests for the release-notes renderers. No network, no Jira token.
 
-Run: python3 .claude/skills/jira-release-notes/scripts/test_build_release_notes.py
+Run: python3 .claude/skills/sethi-release-notes/scripts/test_build_release_notes.py
 """
 from __future__ import annotations
 

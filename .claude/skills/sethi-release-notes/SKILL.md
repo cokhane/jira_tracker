@@ -1,5 +1,5 @@
 ---
-name: jira-release-notes
+name: sethi-release-notes
 description: >-
   Render a Jira status column as a standalone release-notes / UAT sheet — one HTML file for
   viewing and sharing, and a second whose markup survives a paste into Microsoft Outlook.
@@ -11,7 +11,7 @@ description: >-
   output files.
 ---
 
-# Jira release notes
+# Sethi release notes
 
 Produces a sheet listing every ticket sitting in one Jira status column, addressed to the
 business team who sign the release off rather than to the developers who built it.
@@ -27,7 +27,7 @@ than becoming the fifth. Stdlib only; runs under a bare `python3` with no virtua
 ## Run it
 
 ```bash
-python3 .claude/skills/jira-release-notes/scripts/build_release_notes.py \
+python3 .claude/skills/sethi-release-notes/scripts/build_release_notes.py \
   --project STH --client SETHI --version v0.0.3
 ```
 
@@ -50,7 +50,7 @@ the compose window — choosing **Keep Source Formatting** if prompted.
 Run the tests after touching either renderer:
 
 ```bash
-python3 .claude/skills/jira-release-notes/scripts/test_build_release_notes.py
+python3 .claude/skills/sethi-release-notes/scripts/test_build_release_notes.py
 ```
 
 ## The four rules this skill exists to hold
