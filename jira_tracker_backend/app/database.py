@@ -94,6 +94,7 @@ _ADDED_COLUMNS = {
     "daily_snapshots": {
         "epic_key": "VARCHAR", "epic_name": "VARCHAR",
         "sprint_name": "VARCHAR", "sprint_start": "DATE", "sprint_end": "DATE",
+        "reconstructed": "BOOLEAN DEFAULT 0",
     },
 }
 

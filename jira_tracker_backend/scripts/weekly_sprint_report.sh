@@ -15,7 +15,7 @@
 
 set -euo pipefail
 
-REPO="/Users/axeeeeee/anervea/jira_tracker/version_2/jira_tracker_backend"
+REPO="/Users/rhidzkhanahmad/Projects/jira_tracker/jira_tracker_backend"
 PY="$REPO/.venv/bin/python"
 OUT_DIR="$HOME/Documents/sprint_report"
 LOG="$OUT_DIR/.work/weekly_report.log"

@@ -1,11 +1,18 @@
 #!/bin/bash
-# Nightly all-boards Jira sync — the launchd driver for POST /api/sync-all.
+# Nightly all-boards Jira sync + snapshot — the launchd driver for POST /api/snapshot-all.
 #
-# Calls sync_all() in-process rather than over HTTP, so the job does not depend on the
+# Calls snapshot_all() in-process rather than over HTTP, so the job does not depend on the
 # API server being up. Boards are pulled in parallel and per-board failures are isolated
 # (see _run_for_all_boards in app/main.py), so one board erroring never stops the other.
 #
-# Safe to run by hand at any time: a sync is an idempotent upsert keyed by issue key.
+# snapshot_all (NOT sync_all) is the entrypoint on purpose: sync_all only upserts `issues`,
+# while every dashboard that shows a day — the Velocity Board above all — reads
+# `daily_snapshots`. A nightly job that only synced would refresh the issue rows and leave
+# the board frozen on the last day someone happened to press the button by hand.
+# snapshot_all runs sync_and_snapshot, which syncs AND captures the day (app/sync.py).
+#
+# Safe to run by hand at any time: the sync is an idempotent upsert keyed by issue key and
+# the snapshot replaces that day's rows.
 #
 # Designed for launchd, which supplies almost no environment: every path is absolute and
 # the venv interpreter is called directly rather than activated. The working directory is
@@ -15,7 +22,7 @@
 
 set -euo pipefail
 
-REPO="/Users/axeeeeee/anervea/jira_tracker/version_2/jira_tracker_backend"
+REPO="/Users/rhidzkhanahmad/Projects/jira_tracker/jira_tracker_backend"
 PY="$REPO/.venv/bin/python"
 LOG="$REPO/data/.work/sync_all.log"
 
@@ -24,15 +31,18 @@ exec >> "$LOG" 2>&1
 
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S %Z')] $*"; }
 
-log "=== sync all boards: start ==="
+log "=== sync + snapshot all boards: start ==="
 cd "$REPO"
 
-# full=True mirrors the endpoint's own default: a complete pull rather than "changed since
-# the last sync", so each nightly run self-heals anything an incremental pass would miss.
+# Both arguments are passed EXPLICITLY. These are FastAPI endpoints, so every parameter is
+# annotated for request parsing; calling one as a plain Python function bypasses FastAPI and
+# uses the signature defaults. Passing them here keeps this call independent of whatever
+# those defaults happen to be. target=None means today, in the board's report timezone;
+# force=False because overwriting a past day is a deliberate, human-confirmed act.
 SYNC_JSON="$("$PY" -c '
 import json
-from app.main import sync_all
-print(json.dumps(sync_all(full=True)))
+from app.main import snapshot_all
+print(json.dumps(snapshot_all(target=None, force=False)))
 ')"
 
 # Report every board, then exit non-zero if ANY of them failed — a silent partial sync
@@ -41,12 +51,12 @@ echo "$SYNC_JSON" | "$PY" -c '
 import json, sys
 boards = json.load(sys.stdin)["projects"]
 for b in boards:
-    bits = [f"{k}={b[k]}" for k in ("status", "fetched", "created", "updated", "error")
+    bits = [f"{k}={b[k]}" for k in ("status", "snapshot_date", "issues", "error")
             if b.get(k) not in (None, "")]
     print("    %s: %s" % (b.get("key"), " ".join(bits)))
 bad = [b for b in boards if b.get("status") != "success"]
 if bad:
-    sys.exit("    FAILED: %d of %d board(s) did not sync." % (len(bad), len(boards)))
+    sys.exit("    FAILED: %d of %d board(s) did not snapshot." % (len(bad), len(boards)))
 '
 
-log "=== sync all boards: done ==="
+log "=== sync + snapshot all boards: done ==="

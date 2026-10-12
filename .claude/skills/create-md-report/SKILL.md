@@ -17,7 +17,7 @@ both boards (Nexus / SETHI). Every number is computed deterministically from the
 tracker DBs; Claude writes only the prose (achievements + roadblocks).
 
 ## How it works — a two-pass flow
-The driver is [scripts/generate_compare_decks.py](../../../scripts/generate_compare_decks.py). It
+The driver is [scripts/generate_compare_decks.py](../../../jira_tracker_backend/scripts/generate_compare_decks.py). It
 auto-picks, per board, the two most recent sprints by snapshot date (`closing` = 2nd-latest,
 `kickoff` = latest). Intermediate files live in the stable work dir `~/Documents/sprint_report/.work/`.
 
@@ -60,8 +60,8 @@ Schema:
 Reads the narratives and writes `~/Documents/sprint_report/AllBoards_Sprint_Report_<date>.md`.
 
 ## Metric definitions (keep consistent)
-Rendering lives in [app/report_render.py](../../../app/report_render.py); metrics in
-`_compute_sprint_compare` ([app/main.py](../../../app/main.py)).
+Rendering lives in [app/report_render.py](../../../jira_tracker_backend/app/report_render.py); metrics in
+`_compute_sprint_compare` ([app/main.py](../../../jira_tracker_backend/app/main.py)).
 
 - **Shipped this sprint** — tickets that newly reached a *shipped* status (Merged / Deployment / Done)
   during the closing sprint, measured by diffing the closing snapshot against the prior sprint's. True
@@ -90,7 +90,7 @@ add it back into the combined report.
 - Rosters come from `projects.yaml` (`report_assignees` per board) — no `assignees` override needed.
 - Save location is fixed at `~/Documents/sprint_report/` (per team convention).
 - A PPTX variant of the same report exists via
-  [scripts/build_allboards_deck.py](../../../scripts/build_allboards_deck.py) (reuses the same
+  [scripts/build_allboards_deck.py](../../../jira_tracker_backend/scripts/build_allboards_deck.py) (reuses the same
   narratives) — only build it if the user explicitly wants slides.
 
 ## Verify
