@@ -16,8 +16,9 @@ description: >-
 
 # Sethi release notes
 
-Produces a sheet listing every ticket sitting in one Jira status column, addressed to the
-business team who sign the release off rather than to the developers who built it.
+Produces a sheet listing the tickets of one release — a whole Jira status column by default,
+or a named set of tickets with `--keys` — addressed to the business team who sign the release
+off rather than to the developers who built it.
 
 - [scripts/build_release_notes.py](scripts/build_release_notes.py) — rendering and CLI only
 - [scripts/test_build_release_notes.py](scripts/test_build_release_notes.py) — offline tests
@@ -45,12 +46,34 @@ beside another's:
 | `<client>-release-notes-<version>-outlook.html` | Pasting into Outlook |
 | `<client>-release-notes-<version>.xlsx` | The copy reviewers fill in and send back |
 
-Flags: `--status` (default `Deployment`), `--variant web|outlook|xlsx|all` (default `all`),
-`--from` (who signs the covering note), `--out`.
+Flags: `--status` (default `Deployment`), `--keys` (scope the run to named tickets),
+`--variant web|outlook|xlsx|all` (default `all`), `--from` (who signs the covering note),
+`--out`.
 
-There is deliberately no raw-JQL flag. The masthead states which column was released, and a
-free-form query would let it name a status the run never actually asked for — a false heading
-on a document someone signs.
+### Scoping a release to named tickets
+
+`--keys STH-1,STH-2` renders exactly those tickets instead of the whole column. It exists for
+the release whose tickets have already moved on — work that was signed off out of `Deployment`
+and is now in `Done` is no longer a column, and querying `Done` would sweep in every ticket
+ever closed.
+
+**A scoped run says `selected`, never `released`.** Membership comes from the list the operator
+passed, which Jira cannot corroborate, so neither the masthead nor the covering note claims
+more than that. What the run *can* prove, it proves.
+
+### There is deliberately no raw-JQL flag
+
+The masthead states which column was released, and a free-form query would let it name a status
+the run never actually asked for — a false heading on a document someone signs.
+
+`--keys` is not that back door, and two guards are what keep it from becoming one. Neither is
+optional, and a change that removes either one reopens the hole:
+
+- **`parse_keys` validates rather than escapes.** A Jira key has exactly one shape, so anything
+  not matching it is refused outright — no operator text reaches the JQL, quoted or otherwise.
+- **`verify_scope` proves the masthead before it is written.** Every requested key must come
+  back, and every ticket that comes back must already hold `--status`. A whole-column run gets
+  that guarantee from its query; a scoped run names its own contents, so it has to earn it.
 
 To paste into Outlook: open the `-outlook.html` file in a browser, select all, copy, paste into
 the compose window — choosing **Keep Source Formatting** if prompted.
