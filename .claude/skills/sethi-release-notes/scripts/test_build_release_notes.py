@@ -12,7 +12,6 @@ import sys
 import tempfile
 import unittest
 from datetime import date
-import tempfile
 from pathlib import Path
 from unittest import mock
 
@@ -43,10 +42,10 @@ ISSUES = [
 ]
 
 
-def make_sheet(issues=None, sender="Axe", has_workbook=True):
+def make_sheet(issues=None, sender="Axe", has_workbook=True, scope=None):
     issues = ISSUES if issues is None else issues
     return brn.build_sheet(brn.to_rows(issues, BASE), "SETHI", "v0.0.3",
-                           "Deployment", brn.sprint_names(issues), TODAY,
+                           scope or brn.Scope("Deployment"), brn.sprint_names(issues), TODAY,
                            sender, has_workbook)
 
 
@@ -368,6 +367,161 @@ class TestWording(unittest.TestCase):
 
     def test_the_meta_names_the_status_actually_queried(self):
         self.assertTrue(make_sheet().meta.startswith("Deployment column"))
+
+
+class TestScopeWording(unittest.TestCase):
+    """A scoped release and a whole column must never describe themselves the same way."""
+
+    def test_a_whole_column_run_says_column_in_both_places(self):
+        """The unscoped wording is unchanged by the arrival of --keys."""
+        sheet = make_sheet(scope=brn.Scope("Deployment"))
+        self.assertTrue(sheet.meta.startswith("Deployment column"))
+        self.assertIn("currently in the Deployment column", "\n".join(sheet.message))
+
+    def test_a_scoped_run_does_not_claim_the_whole_column(self):
+        """A named set is not the column it sits in, and must not read as though it were."""
+        sheet = make_sheet(scope=brn.Scope("Done", selected=True))
+        self.assertIn("selected for this release", sheet.meta)
+        message = "\n".join(sheet.message)
+        self.assertIn("selected for this release", message)
+        self.assertNotIn("currently in the Done column for this sprint", message)
+
+    def test_no_wording_claims_a_ticket_was_released(self):
+        """Membership comes from the operator's key list, which Jira cannot corroborate.
+
+        The assertion names the bare word, not a phrase: a phrase no branch can emit would
+        make this test unfailable, which is worse than not having it.
+        """
+        for scope in (brn.Scope("Deployment"), brn.Scope("Done", selected=True)):
+            with self.subTest(selected=scope.selected):
+                self.assertNotIn("released", "\n".join(make_sheet(scope=scope).message))
+
+    def test_the_masthead_and_the_note_name_the_same_status(self):
+        """The two descriptions of one sheet may never disagree about its status."""
+        for scope in (brn.Scope("Deployment"), brn.Scope("Done", selected=True)):
+            with self.subTest(scope.status):
+                sheet = make_sheet(scope=scope)
+                self.assertIn(scope.status, sheet.meta)
+                self.assertIn(scope.status, "\n".join(sheet.message))
+
+
+class TestStatusOf(unittest.TestCase):
+    """One rule for reading a status, shared by the rows and the scope guard."""
+
+    def test_it_reads_the_status_name(self):
+        """The ordinary case."""
+        self.assertEqual(brn.status_of({"fields": {"status": {"name": "Done"}}}), "Done")
+
+    def test_every_shape_of_absence_becomes_the_same_unknown(self):
+        """A missing fields, status or name must not produce three different answers."""
+        for shape in ({}, {"fields": None}, {"fields": {}}, {"fields": {"status": None}},
+                      {"fields": {"status": {}}}, {"fields": {"status": {"name": ""}}}):
+            with self.subTest(repr(shape)):
+                self.assertEqual(brn.status_of(shape), brn.UNKNOWN_STATUS)
+
+    def test_the_rows_and_the_guard_read_a_status_identically(self):
+        """Drift here would let the sheet display one status while the gate verified another."""
+        issue = {"key": "STH-1", "fields": {"status": {"name": "QA Testing"}}}
+        self.assertEqual(brn.to_rows([issue], BASE)[0].status, brn.status_of(issue))
+
+
+class TestReleaseJql(unittest.TestCase):
+    """The branch that decides both the query and the masthead wording."""
+
+    def test_an_unscoped_run_queries_the_whole_status_column(self):
+        """No keys means the original whole-column behaviour, unchanged."""
+        jql = brn.release_jql("STH", "Deployment", ())
+        self.assertEqual(jql, 'project = STH AND status = "Deployment" ORDER BY key ASC')
+
+    def test_a_scoped_run_queries_the_keys_and_not_the_status(self):
+        """The status is the masthead's claim, proven separately; it must not narrow the query."""
+        jql = brn.release_jql("STH", "Done", ("STH-1", "STH-2"))
+        self.assertEqual(jql, "project = STH AND key IN (STH-1, STH-2) ORDER BY key ASC")
+        self.assertNotIn("status", jql)
+
+    def test_the_project_is_escaped_in_both_modes(self):
+        """project has no shape to validate against, so it is escaped rather than checked."""
+        for keys in ((), ("STH-1",)):
+            with self.subTest(scoped=bool(keys)):
+                self.assertIn(escape_jql('a"b'), brn.release_jql('a"b', "Done", keys))
+
+
+class TestKeyParsing(unittest.TestCase):
+    """--keys is the one place operator text reaches the JQL, so it is validated, not escaped."""
+
+    def test_absent_flag_is_an_empty_scope(self):
+        """No flag and an empty flag both mean the whole column."""
+        self.assertEqual(brn.parse_keys(None), ())
+        self.assertEqual(brn.parse_keys(""), ())
+
+    def test_commas_and_whitespace_both_separate(self):
+        """Keys get pasted out of Jira and out of chat, which separate them differently."""
+        self.assertEqual(brn.parse_keys("STH-1, STH-2\nSTH-3"), ("STH-1", "STH-2", "STH-3"))
+
+    def test_keys_are_upper_cased_and_de_duplicated_in_order(self):
+        """A duplicate would otherwise double a row and inflate the count in the covering note."""
+        self.assertEqual(brn.parse_keys("sth-9,STH-9,sth-4"), ("STH-9", "STH-4"))
+
+    def test_anything_that_is_not_a_key_is_refused(self):
+        """The flag must not become the raw-JQL back door the skill deliberately lacks."""
+        for hostile in ('STH-1") OR (project', "STH-1 ORDER BY key", "*", "STH-", "1-STH"):
+            with self.subTest(hostile), self.assertRaises(ValueError):
+                brn.parse_keys(hostile)
+
+
+class TestVerifyScope(unittest.TestCase):
+    """The two proofs that let a scoped run keep an honest masthead."""
+
+    @staticmethod
+    def issue(key, status="Done"):
+        """A minimal issue carrying just the key and status the guard reads."""
+        return {"key": key, "fields": {"status": {"name": status}}}
+
+    def test_a_fully_present_matching_set_passes(self):
+        """The happy path raises nothing."""
+        brn.verify_scope([self.issue("STH-1"), self.issue("STH-2")], ("STH-1", "STH-2"), "Done")
+
+    def test_a_key_that_did_not_come_back_is_refused(self):
+        """A silently dropped key would shrink the release without changing its heading."""
+        with self.assertRaises(JiraApiError) as caught:
+            brn.verify_scope([self.issue("STH-1")], ("STH-1", "STH-2"), "Done")
+        self.assertIn("STH-2", str(caught.exception))
+
+    def test_a_ticket_in_another_status_is_refused(self):
+        """Otherwise the masthead would claim a status the ticket does not hold."""
+        with self.assertRaises(JiraApiError) as caught:
+            brn.verify_scope([self.issue("STH-1", "QA Testing")], ("STH-1",), "Done")
+        self.assertIn("QA Testing", str(caught.exception))
+
+    def test_a_missing_status_object_is_refused_rather_than_defaulted(self):
+        """An unreadable status is not evidence that the ticket holds the stated one."""
+        with self.assertRaises(JiraApiError):
+            brn.verify_scope([{"key": "STH-1", "fields": {}}], ("STH-1",), "Done")
+
+
+class TestWriteVariants(unittest.TestCase):
+    """The write stage, lifted out of main() so the variant filter is testable."""
+
+    def test_only_the_requested_variant_is_written(self):
+        """--variant web must not leave an .xlsx or an Outlook file beside it."""
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "v0-0-9"
+            brn.write_variants(make_sheet(), "web", out, "sheet")
+            self.assertEqual([f.name for f in out.iterdir()], ["sheet.html"])
+
+    def test_all_writes_every_variant(self):
+        """The default variant produces the full three-file package."""
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "v0-0-9"
+            brn.write_variants(make_sheet(), brn.ALL_VARIANTS, out, "sheet")
+            self.assertEqual(len(list(out.iterdir())), len(brn.VARIANTS))
+
+    def test_it_creates_the_version_folder_it_was_given(self):
+        """Every version gets its own folder, so one release never lands on another's."""
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "nested" / "v0-0-9"
+            brn.write_variants(make_sheet(), "web", out, "sheet")
+            self.assertTrue(out.is_dir())
 
 
 if __name__ == "__main__":

@@ -53,6 +53,8 @@ SLUG_FALLBACK = "sheet"
 SPRINT_FIELD = "customfield_10020"
 FIELDS = ["summary", "status", SPRINT_FIELD]
 
+ISSUE_KEY = re.compile(r"^[A-Z][A-Z0-9_]*-[0-9]+$")
+
 SIGNOFF_HEADER = "Business Team Sign Off"
 DECISION_HEADER = "Can this be deployed?"
 DECISION_CHOICES = ("Yes", "No", "On Hold")
@@ -113,12 +115,45 @@ class Sheet:
     rows: tuple[Row, ...]
 
 
+@dataclass(frozen=True)
+class Scope:
+    """What the sheet claims to cover, worded once for the masthead and the covering note.
+
+    A run renders either a whole status column or a named set of tickets that have all
+    reached that status. Both phrasings live here because the two places that describe the
+    sheet must describe it identically — a masthead and a note that disagree about what was
+    released is the defect this module exists to prevent.
+    """
+
+    status: str
+    selected: bool = False
+
+    @property
+    def meta(self) -> str:
+        """The masthead's one-line claim about what this sheet covers."""
+        if self.selected:
+            return f"{self.status} — selected for this release"
+        return f"{self.status} column"
+
+    def describes(self, count: int) -> str:
+        """The same claim as a sentence, for the covering note.
+
+        A scoped run says "selected", never "released": membership comes from the key list
+        the operator passed, which Jira cannot corroborate. All verify_scope proves is that
+        those tickets exist and hold this status, so that is all the note asserts.
+        """
+        if self.selected:
+            return (f"the {tally(count)} selected for this release, "
+                    f"all now in the {self.status} column")
+        return f"the {tally(count)} currently in the {self.status} column for this sprint"
+
+
 def tally(count: int) -> str:
     """'91 tickets', '1 ticket'. One place, because the band and the message both say it."""
     return f"{count} ticket{'' if count == 1 else 's'}"
 
 
-def covering_message(client: str, version: str, status: str, count: int, sender: str,
+def covering_message(client: str, version: str, scope: Scope, count: int, sender: str,
                      has_workbook: bool) -> tuple[str, ...]:
     """The note that goes out with the sheet, as paragraphs.
 
@@ -134,9 +169,9 @@ def covering_message(client: str, version: str, status: str, count: int, sender:
                     "to fill it in there and send it back.")
     return (
         "Hi team,",
-        f"Please find below the release notes for {client} {version}, covering the "
-        f"{tally(count)} currently in the {status} column for this sprint. These have been "
-        f"deployed to {ENVIRONMENT} and are ready for your review.",
+        f"Please find below the release notes for {client} {version}, covering "
+        f"{scope.describes(count)}. These have been deployed to {ENVIRONMENT} and are ready "
+        "for your review.",
         fill_in,
         "We'll proceed with the production deployment once all items are signed off. Let me "
         "know if you need any clarification on a particular ticket.",
@@ -144,7 +179,7 @@ def covering_message(client: str, version: str, status: str, count: int, sender:
     )
 
 
-def build_sheet(rows: tuple[Row, ...], client: str, version: str, status: str,
+def build_sheet(rows: tuple[Row, ...], client: str, version: str, scope: Scope,
                 sprints: list[str], today: date, sender: str,
                 has_workbook: bool) -> Sheet:
     """Settle every string and every column once, for all three renderers.
@@ -156,12 +191,12 @@ def build_sheet(rows: tuple[Row, ...], client: str, version: str, status: str,
     The two sign-off columns ship EMPTY on purpose — they are what the reviewer fills in, and
     the sheet must never arrive looking as though someone already answered for them.
     """
-    meta_parts = [f"{status} column", *sprints, f"{today:%d %B %Y}"]
+    meta_parts = [scope.meta, *sprints, f"{today:%d %B %Y}"]
     return Sheet(
         title=f"{client} Release Notes — {version}",
         meta=" · ".join(meta_parts),
         band=f"{client} — {tally(len(rows))}",
-        message=covering_message(client, version, status, len(rows), sender, has_workbook),
+        message=covering_message(client, version, scope, len(rows), sender, has_workbook),
         footer=f"Pulled live from Jira on {today:%d %B %Y}.",
         columns=(
             Column("Client", Kind.CLIENT, lambda _row: Cell(client)),
@@ -178,6 +213,16 @@ def build_sheet(rows: tuple[Row, ...], client: str, version: str, status: str,
 # ---------------------------------------------------------------- Jira -> rows
 
 
+def status_of(issue: dict) -> str:
+    """An issue's status name, with the meaning of an absent one settled once.
+
+    Both the rows the reader sees and the scope guard that proves the masthead read this.
+    Were they to drift apart, a sheet could display one status while the gate verified
+    another — the false heading verify_scope exists to prevent, passing its own check.
+    """
+    return ((issue.get("fields") or {}).get("status") or {}).get("name") or UNKNOWN_STATUS
+
+
 def to_rows(issues: list[dict], base_url: str) -> tuple[Row, ...]:
     """Issues as rows, ordered by ticket number rather than by string."""
     rows = []
@@ -187,7 +232,7 @@ def to_rows(issues: list[dict], base_url: str) -> tuple[Row, ...]:
             key=issue["key"],
             url=f"{base_url}/browse/{issue['key']}",
             summary=fields.get("summary") or "",
-            status=(fields.get("status") or {}).get("name") or UNKNOWN_STATUS,
+            status=status_of(issue),
         ))
     return tuple(sorted(rows, key=lambda row: _number(row.key)))
 
@@ -598,11 +643,65 @@ def output_dir(client: str, version: str, override: str | None) -> Path:
     return Path(f"{slug(client)}_release_notes") / slug(version)
 
 
+def parse_keys(raw: str | None) -> tuple[str, ...]:
+    """--keys as an ordered, de-duplicated tuple; empty when the flag is absent.
+
+    Keys are validated against ISSUE_KEY rather than escaped. A Jira key has one shape, so
+    rejecting anything else is a stronger guarantee than quoting: nothing that is not a key
+    can reach the JQL at all, which is what keeps this flag from becoming the raw-query
+    back door the skill deliberately does not have.
+    """
+    if not raw:
+        return ()
+    keys = tuple(dict.fromkeys(part.upper() for part in re.split(r"[,\s]+", raw) if part))
+    bad = [key for key in keys if not ISSUE_KEY.match(key)]
+    if bad:
+        raise ValueError(f"not Jira issue keys: {', '.join(bad)}")
+    return keys
+
+
+def release_jql(project: str, status: str, keys: tuple[str, ...]) -> str:
+    """The query a run makes: a named ticket set when scoped, else the whole status column.
+
+    Keys are interpolated bare because parse_keys has already refused anything that is not
+    key-shaped; project and status are escaped, since neither has a shape to check against.
+    """
+    selector = f'key IN ({", ".join(keys)})' if keys else f'status = "{escape_jql(status)}"'
+    return f"project = {escape_jql(project)} AND {selector} ORDER BY key ASC"
+
+
+def verify_scope(issues: list[dict], keys: tuple[str, ...], status: str) -> None:
+    """Prove the masthead before it is written: all keys present, all in the stated status.
+
+    A scoped run names its own contents, so nothing about the heading is implied by the
+    query the way a whole-column run's is. These two checks put that guarantee back: a key
+    that silently did not come back would shrink the release, and a ticket sitting in some
+    other status would make the sheet's heading a false claim on a document someone signs.
+    """
+    found = {issue["key"]: status_of(issue) for issue in issues}
+    missing = [key for key in keys if key not in found]
+    if missing:
+        raise JiraApiError(
+            f"{len(missing)} of {len(keys)} requested tickets did not come back "
+            f"({', '.join(missing)}) — refusing to ship a release sheet missing rows."
+        )
+    wrong = sorted(f"{key} is {held}" for key, held in found.items() if held != status)
+    if wrong:
+        raise JiraApiError(
+            f'{len(wrong)} ticket(s) are not in "{status}" ({"; ".join(wrong)}) — the '
+            "masthead would claim a status they do not hold."
+        )
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--project", required=True, help="Board key, e.g. STH")
     parser.add_argument("--status", default=DEFAULT_STATUS,
                         help=f'Status column (default: "{DEFAULT_STATUS}")')
+    parser.add_argument("--keys",
+                        help="Scope the release to these ticket keys (comma- or space-"
+                             "separated). Every one must already be in --status, or the run "
+                             "is refused. Default: unset, meaning the whole --status column")
     parser.add_argument("--client", help="Client name in the band (default: the project key)")
     parser.add_argument("--version", default=DEFAULT_VERSION,
                         help="Version label in the masthead")
@@ -613,20 +712,38 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def write_variants(sheet: Sheet, variant: str, out_dir: Path, stem: str) -> None:
+    """Render each requested variant into out_dir, reporting what landed where."""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    for name, (write, suffix) in VARIANTS.items():
+        if variant not in (name, ALL_VARIANTS):
+            continue
+        path = out_dir / f"{stem}{suffix}"
+        write(sheet, path)
+        print(f"wrote {path} ({path.stat().st_size:,} bytes, {len(sheet.rows)} rows)")
+
+
 def main() -> int:
     args = build_parser().parse_args()
     client = args.client or args.project
     today = date.today()
 
     try:
+        keys = parse_keys(args.keys)
+    except ValueError as err:
+        print(f"BLOCKED: {err}", file=sys.stderr)
+        return 1
+
+    try:
         jira = Jira(resolve_credentials())
         account = whoami(jira)
         print(f"acting as: {account}", file=sys.stderr)
 
-        jql = (f'project = {escape_jql(args.project)} AND '
-               f'status = "{escape_jql(args.status)}" ORDER BY key ASC')
+        jql = release_jql(args.project, args.status, keys)
         print(f"jql: {jql}", file=sys.stderr)
         issues = search_all(jira, jql, FIELDS)
+        if keys:
+            verify_scope(issues, keys, args.status)
     except JiraApiError as err:
         print(f"BLOCKED: {err}", file=sys.stderr)
         return 1
@@ -637,19 +754,13 @@ def main() -> int:
 
     sender = args.sender or sender_from(git_user_name(), account)
     has_workbook = args.variant in (WORKBOOK, ALL_VARIANTS)
-    sheet = build_sheet(to_rows(issues, jira.base_url), client, args.version, args.status,
+    scope = Scope(args.status, selected=bool(keys))
+    sheet = build_sheet(to_rows(issues, jira.base_url), client, args.version, scope,
                         sprint_names(issues), today, sender, has_workbook)
 
-    out_dir = output_dir(client, args.version, args.out)
-    out_dir.mkdir(parents=True, exist_ok=True)
-    stem = f"{slug(client)}-release-notes-{slug(args.version)}"
-
-    for name, (write, suffix) in VARIANTS.items():
-        if args.variant not in (name, ALL_VARIANTS):
-            continue
-        path = out_dir / f"{stem}{suffix}"
-        write(sheet, path)
-        print(f"wrote {path} ({path.stat().st_size:,} bytes, {len(sheet.rows)} rows)")
+    write_variants(sheet, args.variant,
+                   output_dir(client, args.version, args.out),
+                   f"{slug(client)}-release-notes-{slug(args.version)}")
     return 0
 
 
