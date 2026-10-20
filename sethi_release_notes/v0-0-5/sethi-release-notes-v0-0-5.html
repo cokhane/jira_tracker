@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SETHI Release Notes — v0.0.5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,700&display=swap">
+<style>
+  /* One full-bleed ledger: masthead, client band, single scrolling table. */
+  :root {
+    --page:#f6f1ec; --sheet:#ffffff; --rule:#ded0c3; --rule-soft:#ece1d7;
+    --ink:#2c221a; --ink-soft:#6d5c4d; --masthead:#3b2d22; --mast-ink:#f7efe6;
+    --mast-sub:#d8c6b4; --band:#9c4418; --band-ink:#fdf3ea; --head:#f1e6dc;
+    --zebra:#faf5f0; --link:#a8400f; --fillable:#fffdf8; --note:#fbf7f2;
+    --font-display:"Source Serif 4",Georgia,serif;
+    --font-body:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+    --font-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+    color-scheme: light;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page:#18120e; --sheet:#221a14; --rule:#44342a; --rule-soft:#33271f; --ink:#f0e6dc; --ink-soft:#b09a86; --masthead:#3a2c21; --mast-ink:#f7efe6; --mast-sub:#cdb8a4; --band:#8f3d13; --band-ink:#fdf3ea; --head:#32261e; --zebra:#271e17; --link:#f0904a; --fillable:#2a211a; --note:#1f1813; color-scheme:dark; } }
+  :root[data-theme="dark"] { --page:#18120e; --sheet:#221a14; --rule:#44342a; --rule-soft:#33271f; --ink:#f0e6dc; --ink-soft:#b09a86; --masthead:#3a2c21; --mast-ink:#f7efe6; --mast-sub:#cdb8a4; --band:#8f3d13; --band-ink:#fdf3ea; --head:#32261e; --zebra:#271e17; --link:#f0904a; --fillable:#2a211a; --note:#1f1813; color-scheme:dark; }
+  body { margin:0; background:var(--page); color:var(--ink); font-family:var(--font-body); font-size:15px; line-height:1.5; }
+  img { max-width:100%; }
+  [hidden] { display:none !important; }
+  .wrap { max-width:1180px; margin:0 auto; padding-inline:16px; padding-block:24px 48px; }
+  .sheet { background:var(--sheet); border:1px solid var(--rule); border-radius:4px; overflow:hidden; }
+  .masthead { background:var(--masthead); color:var(--mast-ink); padding:18px 20px 14px; }
+  .masthead h1 { margin:0; font-family:var(--font-display); font-weight:700; font-size:clamp(1.2rem,1rem + 1.1vw,1.6rem); letter-spacing:-0.01em; text-wrap:balance; }
+  .masthead .meta { margin:8px 0 0; color:var(--mast-sub); font-size:0.83rem; border-top:1px solid rgb(255 255 255 / 0.14); padding-top:10px; }
+  .band { background:var(--band); color:var(--band-ink); padding:10px 20px; font-weight:600; font-size:0.95rem; }
+  .scroller { overflow-x:auto; }
+  table { width:100%; min-width:640px; border-collapse:collapse; font-variant-numeric:tabular-nums; }
+  th, td { text-align:left; vertical-align:top; padding:9px 14px; border-bottom:1px solid var(--rule-soft); }
+  thead th { position:sticky; top:env(safe-area-inset-top, 0px); background:var(--head); color:var(--ink); font-size:0.72rem; font-weight:600; text-transform:uppercase; letter-spacing:0.07em; border-bottom:1px solid var(--rule); white-space:nowrap; }
+  tbody tr:nth-child(even) { background:var(--zebra); }
+  tbody tr:last-child td { border-bottom:none; }
+  .client { width:1%; white-space:nowrap; color:var(--ink-soft); font-size:0.82rem; letter-spacing:0.04em; }
+  .ticket { width:1%; white-space:nowrap; font-family:var(--font-mono); font-size:0.86rem; }
+  .ticket a { color:var(--link); text-decoration:none; border-bottom:1px solid rgb(168 64 15 / 0.4); }
+  .ticket a:hover { border-bottom-color:var(--link); }
+  .ticket a:focus-visible { outline:2px solid var(--link); outline-offset:2px; border-radius:2px; }
+  .details { min-width:0; }
+  .status { width:1%; white-space:nowrap; color:var(--ink-soft); font-size:0.82rem; }
+  .signoff { width:150px; min-width:150px; background:var(--fillable); }
+  .decision { width:150px; min-width:150px; background:var(--fillable); }
+  .note { padding:18px 20px 8px; background:var(--note); border-bottom:1px solid var(--rule); }
+  .note p { margin:0 0 10px; max-width:68ch; }
+  .note p:last-child { margin-bottom:10px; }
+  .foot { margin:14px 2px 0; color:var(--ink-soft); font-size:0.8rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="sheet">
+    <header class="masthead">
+      <h1>SETHI Release Notes — v0.0.5</h1>
+      <p class="meta">Done — selected for this release · STH Sprint 13 · 20 October 2026</p>
+    </header>
+    <div class="band">SETHI — 50 tickets</div>
+    <section class="note" aria-label="Covering note">
+      <p>Hi team,</p>
+      <p>Please find below the release notes for SETHI v0.0.5, covering the 50 tickets selected for this release, all now in the Done column. These have been deployed to UAT and are ready for your review.</p>
+      <p>Kindly review and complete the Business Team Sign Off column, and mark each ticket Yes / No / On Hold under &quot;Can this be deployed?&quot; The attached spreadsheet has dropdowns in that column, so it is easiest to fill it in there and send it back.</p>
+      <p>We&#x27;ll proceed with the production deployment once all items are signed off. Let me know if you need any clarification on a particular ticket.</p>
+      <p>Thanks,<br>Axe</p>
+    </section>
+    <div class="scroller">
+      <table>
+        <thead><tr><th scope="col">Client</th><th scope="col">Ticket</th><th scope="col">Details</th><th scope="col">Status</th><th scope="col">Business Team Sign Off</th><th scope="col">Can this be deployed?</th></tr></thead>
+        <tbody>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-710" target="_blank" rel="noopener">STH-710</a></td><td class="details">[FE] 3.6 surfaces + telemetry — Build the live caption strip for moderator console and observer view: partial vs final rendering</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-714" target="_blank" rel="noopener">STH-714</a></td><td class="details">[FE] 3.6 surfaces + telemetry — Show explained empty states for captions and transcripts</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-831" target="_blank" rel="noopener">STH-831</a></td><td class="details">[BE] 4.9 launch readiness — triage and remediate every security finding to zero high findings open</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-847" target="_blank" rel="noopener">STH-847</a></td><td class="details">[BE] 4.1 cell architecture — cells and capacity APIs: registry view, break-glass drain, and a tenant-safe capacity aggregate</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-855" target="_blank" rel="noopener">STH-855</a></td><td class="details">[FE] 4.5 ops surfaces — ops console: per-cell health board with drain control behind break-glass</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1517" target="_blank" rel="noopener">STH-1517</a></td><td class="details">[INFRA] 1.5 staging — enable the dev grant minter on staging, contained tighter than dev</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1567" target="_blank" rel="noopener">STH-1567</a></td><td class="details">BE: Scope Permissions/Groups/Actions/Resources admin tabs around sethi_admin</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1568" target="_blank" rel="noopener">STH-1568</a></td><td class="details">FE: Disable expert-progress comment input/Send during submit, for parity with project comments</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1569" target="_blank" rel="noopener">STH-1569</a></td><td class="details">BE: Withhold all actions/resources capabilities from client-tier roles</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1570" target="_blank" rel="noopener">STH-1570</a></td><td class="details">FE: Disable all actions/resources checkboxes for client-tier roles</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1578" target="_blank" rel="noopener">STH-1578</a></td><td class="details">configuring Sethi axe bot</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1581" target="_blank" rel="noopener">STH-1581</a></td><td class="details">FE: [Regression] Define regression CSV column layout, fixtures and README</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1613" target="_blank" rel="noopener">STH-1613</a></td><td class="details">FE: [Experts] Author regression rows for the search-to-project happy path</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1615" target="_blank" rel="noopener">STH-1615</a></td><td class="details">FE: [Experts] Author regression rows for shortlist state persistence</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1616" target="_blank" rel="noopener">STH-1616</a></td><td class="details">FE: [Projects] Author regression rows for creating and re-creating a project</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1617" target="_blank" rel="noopener">STH-1617</a></td><td class="details">FE: [Projects] Author regression rows for deleting a project and the two-screen gate discrepancy</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1618" target="_blank" rel="noopener">STH-1618</a></td><td class="details">FE: [Projects] Author regression rows for completing a project</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1619" target="_blank" rel="noopener">STH-1619</a></td><td class="details">FE: [Projects] Author regression rows for staffing analysts onto a project</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1620" target="_blank" rel="noopener">STH-1620</a></td><td class="details">FE: [Projects] Author regression rows for how project controls change across statuses</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1621" target="_blank" rel="noopener">STH-1621</a></td><td class="details">FE: [Expert Progress] Author regression rows for screener upload and stepper advance</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1623" target="_blank" rel="noopener">STH-1623</a></td><td class="details">FE: [Expert Progress] Author regression rows for roles denied screening and scheduling</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1624" target="_blank" rel="noopener">STH-1624</a></td><td class="details">FE: [Expert Progress] Author regression rows for transcript upload and marking a consultation complete</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1625" target="_blank" rel="noopener">STH-1625</a></td><td class="details">FE: [Expert Progress] Author regression rows for consultation report generation</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1626" target="_blank" rel="noopener">STH-1626</a></td><td class="details">FE: [Expert Progress] Author regression rows for roles denied transcript, recording and completion</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1627" target="_blank" rel="noopener">STH-1627</a></td><td class="details">FE: [Projects] Author regression rows for the project request-and-approval handoff</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1628" target="_blank" rel="noopener">STH-1628</a></td><td class="details">FE: [Projects] Author regression rows for declining a project and self-approval</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1629" target="_blank" rel="noopener">STH-1629</a></td><td class="details">FE: [Experts] Author regression rows for approving and rejecting an expert on a project</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1630" target="_blank" rel="noopener">STH-1630</a></td><td class="details">FE: [Specialities] Author regression rows for requesting a speciality and publishing it on approval</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1631" target="_blank" rel="noopener">STH-1631</a></td><td class="details">FE: [Designations] Author regression rows for requesting a designation and publishing it on expert approval</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1632" target="_blank" rel="noopener">STH-1632</a></td><td class="details">FE: [Regression] Author the Cowork execution skill that runs the regression CSVs</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1644" target="_blank" rel="noopener">STH-1644</a></td><td class="details">FE: Sidebar Status row asserts &quot;Inactive&quot; while the profile query is loading or errored</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1645" target="_blank" rel="noopener">STH-1645</a></td><td class="details">FE: Delete icon and Publish Project button spaced far apart on a draft project&#x27;s detail page</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1646" target="_blank" rel="noopener">STH-1646</a></td><td class="details">FE: Dashboard stats row breaks mid-label instead of wrapping on mid-size viewports (~944px)</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1651" target="_blank" rel="noopener">STH-1651</a></td><td class="details">FE: Dashboard project list grid clips column labels and scrolls the page on mid-size viewports (~944px)</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1658" target="_blank" rel="noopener">STH-1658</a></td><td class="details">BE: Record that GRG-tier roles cannot delete any project, and make the route docs and tests say so</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1659" target="_blank" rel="noopener">STH-1659</a></td><td class="details">Approve/Decline project actions regressed to allow client_user — STH-1445 widened the gate back to projects:update</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1663" target="_blank" rel="noopener">STH-1663</a></td><td class="details">[FE] Sethi Admin can manage members on the Users tab</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1664" target="_blank" rel="noopener">STH-1664</a></td><td class="details">[FE] Sethi Admin can manage members in the org Users panel</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1665" target="_blank" rel="noopener">STH-1665</a></td><td class="details">[BE] A Sethi Admin that does not also hold superadmin loses three name-based surfaces</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1666" target="_blank" rel="noopener">STH-1666</a></td><td class="details">[INVESTIGATION] Why a Sethi Admin cannot assign projects</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1667" target="_blank" rel="noopener">STH-1667</a></td><td class="details">[INVESTIGATION] Why a Sethi Admin cannot edit an organization</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1668" target="_blank" rel="noopener">STH-1668</a></td><td class="details">[INVESTIGATION] Enumerate every gate where Sethi Admin diverges from Super Admin</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1669" target="_blank" rel="noopener">STH-1669</a></td><td class="details">[INFRA] Investigation: deploy-staging.yml had never run once — find and clear every blocker</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1670" target="_blank" rel="noopener">STH-1670</a></td><td class="details">[BE] sfu caption conformance tests cannot read their corpus under CodeBuild</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1671" target="_blank" rel="noopener">STH-1671</a></td><td class="details">[BE] sfu app test admit assertion is timing-dependent and fails under CI compute</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1672" target="_blank" rel="noopener">STH-1672</a></td><td class="details">[INFRA] Image pipelines build from `main`, but staging must deploy `develop`</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1683" target="_blank" rel="noopener">STH-1683</a></td><td class="details">[INFRA] STH-1522 follow-up — staging public subnet a cannot be created: dev&#x27;s hostile_network subnet overlaps 10.50.32.0/20</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1684" target="_blank" rel="noopener">STH-1684</a></td><td class="details">[INFRA] Two media nodes claim the same Elastic IP; the loser advertises an ICE candidate it does not hold</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1688" target="_blank" rel="noopener">STH-1688</a></td><td class="details">[INFRA] staging signalling ALB cannot deliver access logs to the CMK-encrypted bucket, leaving the cell with no signalling endpoint</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+          <tr><td class="client">SETHI</td><td class="ticket"><a href="https://team-anervea.atlassian.net/browse/STH-1710" target="_blank" rel="noopener">STH-1710</a></td><td class="details">[INFRA] The STH-1684 fix exceeds EC2&#x27;s 16 KB user_data limit, so the media node launch template cannot be updated</td><td class="status">Done</td><td class="signoff"></td><td class="decision"></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <p class="foot">Pulled live from Jira on 20 October 2026.</p>
+</div>
+</body>
+</html>
